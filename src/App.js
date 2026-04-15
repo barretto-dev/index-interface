@@ -1,16 +1,47 @@
 
 import logo from "./assets/logo-cimatec.png";
 import { startSibr } from "./apiRequests/sbir";
+import { downloadAndSaveZip, prepare } from "./apiRequests/image";
+import { startTrain } from "./apiRequests/gaussianSplatting";
 import './App.css';
+import CameraWindow from "./components/CameraWindow";
 
-import Button from "@mui/material/Button";
+import {Button, Stack} from "@mui/material";
+import TrainTerminal from "./components/TrainTerminal";
 
 function App() {
 
-    const handleStartSibr = async () => {
+  const handleStartSibr = async () => {
     try {
       const res = await startSibr();
       console.log(res);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleGetFrames = async () => {
+    try {
+      const msg = await downloadAndSaveZip();
+      console.log(msg);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handlePrepareFrames = async () => {
+    try {
+      const msg = await prepare();
+      console.log(msg);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleStartTrain = async () => {
+    try {
+      const result = await startTrain();
+      console.log(result.message);
     } catch (err) {
       console.error(err);
     }
@@ -29,17 +60,24 @@ function App() {
         
         {/* LADO ESQUERDO */}
         <div className="left">
-          <div className="section">Esquerda</div>
+          <div className="section">
+            <CameraWindow/>
+          </div>
         </div>
 
         {/* LADO DIREITO */}
         <div className="right">
           <div className="section">
-            <Button variant="contained" onClick={handleStartSibr}>Iniciar SIBR</Button>
+             <Stack direction="column" spacing={1} sx={{ mb: 1 }}>
+                <Button variant="contained" onClick={handleGetFrames}>Receber Frames</Button>
+                <Button variant="contained" onClick={handlePrepareFrames}>Preparar Frames</Button>
+                <Button variant="contained" onClick={handleStartTrain}>Iniciar Treinamento</Button>
+                <Button variant="contained" onClick={handleStartSibr}>Vizualizar</Button>
+             </Stack>
           </div>
 
           <div className="section">
-            <p>Terminal fechado</p>
+            <TrainTerminal/>
           </div>
         </div>
 
