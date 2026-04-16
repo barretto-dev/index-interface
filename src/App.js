@@ -1,4 +1,4 @@
-
+import React, { useState } from "react";
 import logo from "./assets/logo-cimatec.png";
 import { startSibr } from "./apiRequests/sbir";
 import { downloadAndSaveZip, prepare } from "./apiRequests/image";
@@ -8,8 +8,11 @@ import CameraWindow from "./components/CameraWindow";
 
 import {Button, Stack} from "@mui/material";
 import TrainTerminal from "./components/TrainTerminal";
+import FolderModal from "./components/FolderModal";
 
 function App() {
+
+  const [folderModalOpen, setFolderModalOpen] = useState(false);
 
   const handleStartSibr = async () => {
     try {
@@ -72,7 +75,7 @@ function App() {
                 <Button variant="contained" onClick={handleGetFrames}>Receber Frames</Button>
                 <Button variant="contained" onClick={handlePrepareFrames}>Preparar Frames</Button>
                 <Button variant="contained" onClick={handleStartTrain}>Iniciar Treinamento</Button>
-                <Button variant="contained" onClick={handleStartSibr}>Vizualizar</Button>
+                <Button variant="contained" onClick={() => setFolderModalOpen(true)}>Vizualizar</Button>
              </Stack>
           </div>
 
@@ -80,8 +83,14 @@ function App() {
             <TrainTerminal/>
           </div>
         </div>
-
       </div>
+      <FolderModal
+        open={folderModalOpen}
+        onClose={() => setFolderModalOpen(false)}
+        onSuccess={(folderName) => {
+          console.log("SIBR iniciado com:", folderName);
+        }}
+      />
     </div>
   );
 }

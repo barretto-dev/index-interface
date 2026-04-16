@@ -1,0 +1,62 @@
+/* Container interno do modal */
+.modal-title {
+    background-color:#c6cacf;
+}
+
+.modal-content {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    background-color:#d9eaff;
+  }
+  
+  /* Card de cada item */
+  .modal-item {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 12px;
+    transition: all 0.2s ease;
+  }
+  
+  /* Hover */
+  .modal-item:hover {
+    background-color: #f5f5f5;
+  }
+  
+  /* Item selecionado */
+  .modal-item.selected {
+    border-color: #1976d2;
+    background-color: #e3f2fd;
+  }
+  
+  /* Nome da pasta */
+  .modal-item-title {
+    font-weight: 600;
+    font-size: 16px;
+  }
+  
+  /* Texto secundário */
+  .modal-item-subtitle {
+    font-size: 13px;
+    color: #666;
+  }
+  
+  /* Área de erro */
+  .modal-error {
+    margin-bottom: 8px;
+  }
+  
+  /* Footer (botões) */
+  .modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    background-color: #c6cacf;
+  }
+  
+  /* Loading */
+  .modal-loading {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }

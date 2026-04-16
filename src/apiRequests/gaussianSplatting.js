@@ -12,3 +12,14 @@ export async function startTrain() {
 
   return response.json();
 }
+
+export async function getOutputFolders() {
+  const response = await fetch(`${API_BASE}/output/folders`);
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(text || "Erro ao listar pastas");
+  }
+
+  return response.json();
+}
