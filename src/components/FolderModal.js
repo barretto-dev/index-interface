@@ -77,7 +77,7 @@ export default function FolderModal({ open, onClose, onSuccess }) {
       setSubmitting(true);
       setError("");
 
-      if(selectedFolder == "")
+      if(selectedFolder === "")
         setError("Por favor seleciona uma pasta")
       else{
         await startSibr(selectedFolder);
