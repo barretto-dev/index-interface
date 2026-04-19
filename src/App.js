@@ -5,6 +5,8 @@ import { startTrain } from "./apiRequests/gaussianSplatting";
 import './App.css';
 import {Button, Stack} from "@mui/material";
 
+import { useSnackbar } from "./context/SnackbarContext";
+
 import CameraWindow from "./components/CameraWindow";
 import TrainTerminal from "./components/TrainTerminal";
 import FolderModal from "./components/FolderModal";
@@ -12,6 +14,8 @@ import ConfirmModal from "./components/ConfirmModal";
 
 function App() {
 
+  const { showSnackbar } = useSnackbar();
+  
   const [folderModalOpen, setFolderModalOpen] = useState(false);
   const [confirmModalOpen, setConfirmModalOpen] = useState(false);
 
@@ -21,10 +25,11 @@ function App() {
 
   const handleGetFrames = async () => {
     try {
-      const msg = await downloadAndSaveZip();
-      console.log(msg);
+     const {status, msg} = await downloadAndSaveZip();
+     showSnackbar(msg, status)
     } catch (err) {
       console.error(err);
+      showSnackbar("Erro inesperado em na página", "error")
     }
   };
 

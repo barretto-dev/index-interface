@@ -1,13 +1,20 @@
 const API_BASE = `http://${window.location.hostname}:3001`;
 
 export async function downloadAndSaveZip() {
-  const res = await fetch(`${API_BASE}/images/download-and-save`);
+  try {
+    const res = await fetch(`${API_BASE}/images/download-and-save`);
+    const data = await res.json()
+    const message = data.message
 
-  if (!res.ok) {
-    throw new Error("Erro ao salvar zip");
+    if (!res.ok) 
+      return {status:"error", msg: "Erro na requisição: "+message}
+    else
+      return {status:"success", msg: message}
+    
+  } catch (error) {
+    console.log(error)
+    return {status:"error", msg: "Erro inesperado na função downloadAndSaveZip"}
   }
-
-  return res.text();
 }
 
 export async function prepare() {
