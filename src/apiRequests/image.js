@@ -13,19 +13,23 @@ export async function downloadAndSaveZip() {
     
   } catch (error) {
     console.log(error)
-    return {status:"error", msg: "Erro inesperado na função downloadAndSaveZip"}
+    return {status:"error", msg: "Erro inesperado na função downloadAndSaveZip()"}
   }
 }
 
 export async function prepare() {
-  const response = await fetch(`${API_BASE}/images/prepare`, {
-    method: "POST",
-  });
+  try {
+    const res = await fetch(`${API_BASE}/images/prepare`, {method: "POST"});
+    const data = await res.json()
+    const message = data.message
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(errorText);
+    if (!res.ok) 
+      return {status:"error", msg: "Erro na requisição: "+message}
+    else
+      return {status:"success", msg: message}
+    
+  } catch (error) {
+    console.log(error)
+    return {status:"error", msg: "Erro inesperado na função prepare()"}
   }
-
-  return response.json();
 }

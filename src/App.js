@@ -3,7 +3,7 @@ import logo from "./assets/logo-cimatec.png";
 import { downloadAndSaveZip, prepare } from "./apiRequests/image";
 import { startTrain } from "./apiRequests/gaussianSplatting";
 import './App.css';
-import {Button, Stack} from "@mui/material";
+import {Button, Stack, CircularProgress} from "@mui/material";
 
 import { useSnackbar } from "./context/SnackbarContext";
 
@@ -23,22 +23,43 @@ function App() {
   const [confirmModalMessage, setConfirmModalMessage] = useState("")
   const [confirmModalAction, setConfirmModalAction] = useState(null)
 
+  const [loadingGetFrames, setLoadingGetFrames] = useState(false)
+  const [loadingPrepareFrames, setLoadingPrepareFrames] = useState(false)
+  const [loadingTrainFrames, setLoadingTrainFrames] = useState(false)
+
+  const [terminalType, setTerminalType] = useState(null);
+  const [resetTerminal, setResetTerminal] = useState(0);
+
+  const disableMenuButtons = loadingGetFrames || loadingPrepareFrames || loadingTrainFrames
+
   const handleGetFrames = async () => {
     try {
-     const {status, msg} = await downloadAndSaveZip();
-     showSnackbar(msg, status)
+      setLoadingGetFrames(true)
+      const {status, msg} = await downloadAndSaveZip();
+      showSnackbar(msg, status)
     } catch (err) {
       console.error(err);
       showSnackbar("Erro inesperado em na página", "error")
+    }finally{
+      setLoadingGetFrames(false)
     }
   };
 
   const handlePrepareFrames = async () => {
     try {
-      const msg = await prepare();
-      console.log(msg);
+      setLoadingPrepareFrames(true)
+
+      setResetTerminal((prev) => prev + 1);
+      setTerminalType("colmap-stream")
+
+      const {status, msg} = await prepare();
+      showSnackbar(msg, status)
+
     } catch (err) {
       console.error(err);
+      showSnackbar("Erro inesperado em na página", "error")
+    }finally{
+      setLoadingPrepareFrames(false)
     }
   };
 
@@ -71,21 +92,49 @@ function App() {
         <div className="right">
           <div className="section">
              <Stack direction="column" spacing={3} sx={{ mb: 1 }}>
-                <Button variant="contained" onClick={handleGetFrames}>Receber Frames</Button>
-                <Button variant="contained" onClick={handlePrepareFrames}>Preparar Frames</Button>
-                <Button variant="contained" onClick={() =>{handleConfirmModalOpen(
-                  "Iniciando treinamento", 
-                  "Tem Certeza que deseja continuar?",
-                  async () => { await startTrain();}
-                )}}>
+                <Button 
+                  variant="contained" 
+                  onClick={handleGetFrames} 
+                  disabled={disableMenuButtons}
+                  endIcon={
+                    loadingGetFrames ? <CircularProgress size={18} color="inherit" /> : null
+                  }
+                >
+                  Receber Frames
+                </Button>
+                <Button 
+                  variant="contained" 
+                  onClick={handlePrepareFrames}
+                  disabled={disableMenuButtons}
+                  endIcon={
+                    loadingPrepareFrames ? <CircularProgress size={18} color="inherit" /> : null
+                  }
+                >
+                  Preparar Frames
+                </Button>
+                <Button 
+                  variant="contained"
+                  disabled={disableMenuButtons}
+                  onClick={() =>{handleConfirmModalOpen(
+                    "Iniciando treinamento", 
+                    "Tem Certeza que deseja continuar?",
+                    async () => { await startTrain();}
+                  )}}
+                >
                   Iniciar Treinamento
                 </Button>
-                <Button variant="contained" onClick={() => setFolderModalOpen(true)}>Vizualizar</Button>
+                <Button 
+                  variant="contained" 
+                  disabled={disableMenuButtons}
+                  onClick={() => setFolderModalOpen(true)}
+                >
+                  Vizualizar
+                </Button>
              </Stack>
           </div>
 
           <div className="section">
-            <TrainTerminal/>
+            <TrainTerminal endpoint={terminalType} resetKey={resetTerminal}/>
           </div>
         </div>
       </div>
