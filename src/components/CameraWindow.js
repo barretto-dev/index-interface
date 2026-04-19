@@ -1,35 +1,56 @@
 import React, { useRef, useState, useEffect } from "react";
+import { useSnackbar } from "../context/SnackbarContext";
 import {
   Box,
   Card,
   CardContent,
   Typography,
-  Button,
   Stack,
-  Chip,
   CircularProgress,
+  Switch,
+  FormControlLabel
 } from "@mui/material";
 
 import JSMpeg from "jsmpeg-player"; 
-import { startRecord, stopRecord } from "../apiRequests/camera";
+//import { startRecord, stopRecord } from "../apiRequests/camera";
 
 export default function CameraWindow() {
+
+  const WS_URL = "ws://192.168.0.20:8765";
+  const TIMEOUT_CONNECTION = 5000
+
   const canvasRef = useRef(null);
   const playerRef = useRef(null);
   const firstFrameRenderedRef = useRef(false);
 
-  const [status, setStatus] = useState("Desconectado");
+  const { showSnackbar } = useSnackbar();
+
   const [loading, setLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState("");
 
-  const WS_URL = "ws://192.168.0.20:8765";
+  const [isSwitchOn, setIsSwitchOn] = useState(false);
+
+
+  const handleToggle = async (event) => {
+    const checked = event.target.checked;
+
+    if (loading) return;
+
+    setIsSwitchOn(checked);
+
+    if (checked) 
+      await handleStart();
+    else 
+      await handleStop();
+
+  };
 
   const destroyPlayer = () => {
     if (playerRef.current) {
       try {
         playerRef.current.destroy();
       } catch (err) {
-        console.error("Erro ao destruir player:", err);
+        showSnackbar("Erro ao encerrar camera", "error");
       } finally {
         playerRef.current = null;
       }
@@ -38,25 +59,22 @@ export default function CameraWindow() {
     const canvas = canvasRef.current;
     if (canvas) {
       const ctx = canvas.getContext("2d");
-      if (ctx) {
+      if (ctx) 
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-      }
     }
 
     firstFrameRenderedRef.current = false;
   };
 
   const handleStart = async () => {
-    if (!canvasRef.current || loading) return;
+    if (!canvasRef.current) return;
 
     setLoading(true);
     setLoadingMessage("Iniciando vídeo...");
-    setStatus("Conectando");
 
     try {
-      if (playerRef.current) {
-        destroyPlayer();
-      }
+      if (playerRef.current) 
+        destroyPlayer()
 
       firstFrameRenderedRef.current = false;
 
@@ -66,47 +84,26 @@ export default function CameraWindow() {
         audio: false,
         disableGl: true,
 
-        onPlay: () => {
-          setStatus("Conectando");
-        },
-
         onVideoDecode: () => {
           if (!firstFrameRenderedRef.current) {
-            firstFrameRenderedRef.current = true;
-            setLoading(false);
-            setLoadingMessage("");
-            setStatus("Transmitindo");
+            firstFrameRenderedRef.current = true
+            setLoading(false)
           }
         },
+      })
 
-        onPause: () => {
-          if (!firstFrameRenderedRef.current) {
-            setLoading(false);
-            setLoadingMessage("");
-            setStatus("Desconectado");
-          }
-        },
-
-        onEnded: () => {
-          setLoading(false);
-          setLoadingMessage("");
-          setStatus("Desconectado");
-        },
-      });
-
-      // fallback: se nada chegar em alguns segundos, assume erro de conexão/stream
       setTimeout(() => {
-        if (!firstFrameRenderedRef.current && playerRef.current) {
-          setLoading(false);
-          setLoadingMessage("");
-          setStatus("Erro");
+        if (!firstFrameRenderedRef.current) {
+          setLoading(false)
+          setIsSwitchOn(false)
+          showSnackbar(`Tentativa de conexão ultrapassou o limite de ${TIMEOUT_CONNECTION/1000}s`, "error")
         }
-      }, 5000);
+      }, TIMEOUT_CONNECTION)
+
     } catch (err) {
-      console.error("Erro ao iniciar player:", err);
       setLoading(false);
-      setLoadingMessage("");
-      setStatus("Erro");
+      setIsSwitchOn(false);
+      showSnackbar("Erro inesperado ocorreu", "error", 6000);
     }
   };
 
@@ -118,7 +115,6 @@ export default function CameraWindow() {
 
     try {
       destroyPlayer();
-      setStatus("Desconectado");
     } finally {
       setLoading(false);
       setLoadingMessage("");
@@ -132,13 +128,7 @@ export default function CameraWindow() {
   }, []);
 
   return (
-    <Box
-      sx={{
-        width: "100%",
-        height: "100%",
-        display: "flex",
-      }}
-    >
+    <Box sx={{ width: "100%", height: "100%", display: "flex",}}>
       <Card
         sx={{
           flex: 1,
@@ -158,48 +148,18 @@ export default function CameraWindow() {
             minHeight: 0,
           }}
         >
-          <Stack
-            direction="row"
-            justifyContent="space-between"
-            alignItems="center"
-            sx={{ mb: 1 }}
-          >
-            <Typography variant="subtitle1">Vídeo</Typography>
-            <Chip
-              label={status}
-              size="small"
-              color={
-                status === "Transmitindo"
-                  ? "success"
-                  : status === "Erro"
-                  ? "error"
-                  : status === "Conectando"
-                  ? "warning"
-                  : "default"
-              }
-            />
-          </Stack>
-
-          <Stack direction="row" spacing={1} sx={{ mb: 1 }}>
-            <Button
-              size="small"
-              variant="contained"
-              onClick={handleStart}
-              disabled={loading || status === "Transmitindo" || status === "Conectando"}
-            >
-              Start
-            </Button>
-
-            <Button
-              size="small"
-              variant="contained"
-              color="error"
-              onClick={handleStop}
-              disabled={loading || status === "Desconectado"}
-            >
-              Stop
-            </Button>
-          </Stack>
+          <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 1 }}>
+          <FormControlLabel
+            control={
+              <Switch
+                checked={isSwitchOn}
+                onChange={handleToggle}
+                disabled={loading}
+              />
+            }
+            label={isSwitchOn ? "Ligado" : "Desligado"}
+          />
+        </Stack>
 
           <Box
             sx={{
