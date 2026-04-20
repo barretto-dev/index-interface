@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { useSnackbar } from "../context/SnackbarContext";
 import {
   Box,
@@ -30,7 +30,29 @@ export default function CameraWindow() {
 
   const [isCameraOn, setIsCameraOn] = useState(false);
   const [isRecordOn, setIsRecordOn] = useState(false);
+  const [recordTime, setRecordTime] = useState(0); //seconds
 
+  useEffect(() => {
+    let interval = null;
+  
+    if (isRecordOn) {
+      interval = setInterval(() => {
+        setRecordTime((prev) => prev + 1);
+      }, 1000);
+    } else {
+      clearInterval(interval);
+      setRecordTime(0)
+    }
+  
+    return () => clearInterval(interval);
+  }, [isRecordOn]);
+
+  //Recebe segundos e retorna string no formato MM:SS
+  const formatTime = (secs) => {
+    const minutes = Math.floor(secs / 60);
+    const remainingrecordTime = secs % 60;
+    return `${String(minutes).padStart(2, "0")}:${String(remainingrecordTime).padStart(2, "0")}`
+  };
 
   const handleCameraToggle = async (event) => {
     const checked = event.target.checked;
@@ -190,6 +212,12 @@ export default function CameraWindow() {
               control={<Switch checked={isRecordOn} onChange={handleRecordToggle}disabled={loading || !isCameraOn}/>}
               label={isRecordOn ? "Record ON" : "Record OFF"}
             />
+            {isRecordOn && (
+               <Typography variant="h5" sx={{paddingTop: "3px", color:"red"}}>
+                {formatTime(recordTime)}
+              </Typography>
+            )}
+           
           </Stack>
 
           <Box
@@ -220,7 +248,7 @@ export default function CameraWindow() {
                   zIndex: 2,
                 }}
               >
-                <CircularProgress color="inherit" />
+                <CircularProgress sx={{color:"#fff"}} />
                 <Typography sx={{ color: "#fff" }}>
                   {loadingMessage || "Carregando..."}
                 </Typography>
