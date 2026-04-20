@@ -118,7 +118,11 @@ function App() {
                   onClick={() =>{handleConfirmModalOpen(
                     "Iniciando treinamento", 
                     "Tem Certeza que deseja continuar?",
-                    async () => { await startTrain();}
+                    async () => { 
+                      setResetTerminal((prev) => prev + 1);
+                      setTerminalType("convert-stream")
+                      await startTrain()
+                    ;}
                   )}}
                 >
                   Iniciar Treinamento
