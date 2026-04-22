@@ -1,7 +1,5 @@
 import React, { useState } from "react";
 import logo from "./assets/logo-cimatec.png";
-import { downloadAndSaveZip, startPreparetion, stopPreparation } from "./apiRequests/image";
-import { startTrain } from "./apiRequests/gaussianSplatting";
 import './App.css';
 import {Button, Stack, CircularProgress} from "@mui/material";
 
@@ -11,6 +9,9 @@ import CameraWindow from "./components/CameraWindow";
 import TrainTerminal from "./components/TrainTerminal";
 import FolderModal from "./components/FolderModal";
 import ConfirmModal from "./components/ConfirmModal";
+
+import { downloadAndSaveZip, startPreparetion, stopPreparation } from "./apiRequests/image";
+import { startTrain, stopTrain } from "./apiRequests/gaussianSplatting";
 
 function App() {
 
@@ -71,7 +72,7 @@ function App() {
 
   const handleStartTrain = async () => {
     try {
-      setLoadingPrepareFrames(true)
+      setLoadingTrainFrames(true)
       setResetTerminal((prev) => prev + 1);
 
       const type = ENUM_TERMINAL_TYPES["start-trainning"]
@@ -87,7 +88,7 @@ function App() {
       console.error(error);
       showSnackbar("Erro inesperado na página", "error")
     }finally{
-      setLoadingPrepareFrames(false)
+      setLoadingTrainFrames(false)
     }
   }
 
@@ -97,16 +98,23 @@ function App() {
       let status = null
       let msg = null
 
-      if(termType === "prepare-frames-stream"){
+      if(termType === ENUM_TERMINAL_TYPES["prepare-frames"]){
         const res = await stopPreparation();
+        status = res.status
+        msg = res.msg
+      }else if(termType === ENUM_TERMINAL_TYPES["start-trainning"]){
+        const res = await stopTrain()
         status = res.status
         msg = res.msg
       }else{
         showSnackbar(`Não foi encontrado terminalType == ${termType}`, "error")
         return
       }
+
       showSnackbar(msg, status)
       setLoadingGetFrames(false)
+      setLoadingTrainFrames(false)
+      
     } catch (err) {
       console.error(err);
       showSnackbar("Erro inesperado em na página", "error")
@@ -165,6 +173,9 @@ function App() {
                 <Button 
                   variant="contained"
                   disabled={disableMenuButtons}
+                  endIcon={
+                    loadingTrainFrames ? <CircularProgress size={18} color="inherit" /> : null
+                  }
                   onClick={() =>{handleConfirmModalOpen(
                     "Iniciando treinamento", 
                     "Tem Certeza que deseja continuar?",
