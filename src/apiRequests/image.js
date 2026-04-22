@@ -17,9 +17,9 @@ export async function downloadAndSaveZip() {
   }
 }
 
-export async function prepare() {
+export async function startPreparetion() {
   try {
-    const res = await fetch(`${API_BASE}/images/prepare`, {method: "POST"});
+    const res = await fetch(`${API_BASE}/images/prepare/start`, {method: "POST"});
     const data = await res.json()
     const message = data.message
 
@@ -30,6 +30,23 @@ export async function prepare() {
     
   } catch (error) {
     console.log(error)
-    return {status:"error", msg: "Erro inesperado na função prepare()"}
+    return {status:"error", msg: "Erro inesperado na função startPreparetion()"}
+  }
+}
+
+export async function stopPreparation() {
+  try {
+    const res = await fetch(`${API_BASE}/images/prepare/stop`, {method: "POST"});
+    const data = await res.json()
+    const message = data.message
+
+    if (!res.ok) 
+      return {status:"error", msg: "Erro na requisição: "+message}
+    else
+      return {status:"success", msg: message}
+    
+  } catch (error) {
+    console.log(error)
+    return {status:"error", msg: "Erro inesperado na função stopPreparation()"}
   }
 }

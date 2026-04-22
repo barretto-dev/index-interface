@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import logo from "./assets/logo-cimatec.png";
-import { downloadAndSaveZip, prepare } from "./apiRequests/image";
+import { downloadAndSaveZip, startPreparetion, stopPreparation } from "./apiRequests/image";
 import { startTrain } from "./apiRequests/gaussianSplatting";
 import './App.css';
 import {Button, Stack, CircularProgress} from "@mui/material";
@@ -13,6 +13,11 @@ import FolderModal from "./components/FolderModal";
 import ConfirmModal from "./components/ConfirmModal";
 
 function App() {
+
+  const ENUM_TERMINAL_TYPES = {
+    "prepare-frames": "prepare-frames-stream",
+    "start-trainning": "convert-stream"
+  }
 
   const { showSnackbar } = useSnackbar();
   
@@ -27,7 +32,7 @@ function App() {
   const [loadingPrepareFrames, setLoadingPrepareFrames] = useState(false)
   const [loadingTrainFrames, setLoadingTrainFrames] = useState(false)
 
-  const [terminalType, setTerminalType] = useState(null);
+  const [terminalType, setTerminalType] = useState(null); 
   const [resetTerminal, setResetTerminal] = useState(0);
 
   const disableMenuButtons = loadingGetFrames || loadingPrepareFrames || loadingTrainFrames
@@ -48,20 +53,43 @@ function App() {
   const handlePrepareFrames = async () => {
     try {
       setLoadingPrepareFrames(true)
-
       setResetTerminal((prev) => prev + 1);
-      setTerminalType("colmap-stream")
 
-      const {status, msg} = await prepare();
+      const type = ENUM_TERMINAL_TYPES["prepare-frames"]
+      setTerminalType(type)
+
+      const {status, msg} = await startPreparetion();
       showSnackbar(msg, status)
 
     } catch (err) {
       console.error(err);
-      showSnackbar("Erro inesperado em na página", "error")
+      showSnackbar("Erro inesperado na página", "error")
     }finally{
       setLoadingPrepareFrames(false)
     }
   };
+
+  const handleStopProcess = async (termType) => {
+    try {
+
+      let status = null
+      let msg = null
+
+      if(termType === "prepare-frames-stream"){
+        const res = await stopPreparation();
+        status = res.status
+        msg = res.msg
+      }else{
+        showSnackbar(`Não foi encontrado terminalType == ${termType}`, "error")
+        return
+      }
+      showSnackbar(msg, status)
+      setLoadingGetFrames(false)
+    } catch (err) {
+      console.error(err);
+      showSnackbar("Erro inesperado em na página", "error")
+    }
+  }
 
   const handleConfirmModalOpen = (title, message, action) => {
       setConfirmModalTitle(title)
@@ -120,7 +148,8 @@ function App() {
                     "Tem Certeza que deseja continuar?",
                     async () => { 
                       setResetTerminal((prev) => prev + 1);
-                      setTerminalType("convert-stream")
+                      const type = ENUM_TERMINAL_TYPES["start-trainning"]
+                      setTerminalType(type)
                       await startTrain()
                     ;}
                   )}}
@@ -132,13 +161,17 @@ function App() {
                   disabled={disableMenuButtons}
                   onClick={() => setFolderModalOpen(true)}
                 >
-                  Vizualizar
+                  Visualizar
                 </Button>
              </Stack>
           </div>
 
           <div className="section">
-            <TrainTerminal endpoint={terminalType} resetKey={resetTerminal}/>
+            <TrainTerminal 
+              endpoint={terminalType} 
+              resetKey={resetTerminal}
+              stopProccesFunction={handleStopProcess}
+            />
           </div>
         </div>
       </div>

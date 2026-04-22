@@ -1,51 +1,50 @@
 import React, { useEffect, useState, useRef } from "react";
 import { Box, Button, Chip, Stack, Typography } from "@mui/material";
+import StopIcon from '@mui/icons-material/Stop';
 
-export default function TrainTerminal({ endpoint, resetKey }) {
+export default function TrainTerminal({ endpoint, resetKey, stopProccesFunction }) {
   const [logs, setLogs] = useState("");
   const [connected, setConnected] = useState(false);
+  const [loadingStopProcess, setLoadingStopProcess] = useState(false)
+
   const containerRef = useRef(null);
 
-  // 🔥 limpa logs automaticamente quando resetKey muda
-  useEffect(() => {
-    setLogs("");
-  }, [resetKey]);
+  //Limpa logs automaticamente quando resetKey muda
+  useEffect(() => { setLogs("") }, [resetKey]);
 
   useEffect(() => {
     if (!endpoint) return;
 
-    const socket = new WebSocket(
-      `ws://${window.location.hostname}:3001/${endpoint}`
-    );
+    const socket = new WebSocket(`ws://${window.location.hostname}:3001/${endpoint}`);
 
-    socket.onopen = () => {
-      setConnected(true);
-    };
-
-    socket.onmessage = (event) => {
-      setLogs((prev) => prev + event.data);
-    };
-
-    socket.onerror = () => {
-      setLogs((prev) => prev + "\n[erro na conexão websocket]\n");
-    };
+    socket.onopen = () => { setConnected(true) };
+    socket.onmessage = (event) => { setLogs((prev) => prev + event.data) };
+    socket.onerror = () => { setLogs((prev) => prev + "\n[erro na conexão websocket]\n") }
 
     socket.onclose = () => {
-      setConnected(false);
-      setLogs((prev) => prev + "\n[conexão encerrada]\n");
-    };
+      setConnected(false)
+      setLogs((prev) => prev + "\n[conexão encerrada]\n")
+    }
 
-    return () => {
-      socket.close();
-    };
+    return () => { socket.close() }
+
   }, [endpoint]);
 
   useEffect(() => {
-    if (containerRef.current) {
-      containerRef.current.scrollTop =
-        containerRef.current.scrollHeight;
-    }
+    if (containerRef.current) 
+      containerRef.current.scrollTop = containerRef.current.scrollHeight;
   }, [logs]);
+
+  const handleStopProcess = async () => {
+    try {
+      setLoadingStopProcess(true)
+      await stopProccesFunction(endpoint)
+    } catch (error) {
+      console.error("Erro ao parar processo:", error);
+    }finally{
+      setLoadingStopProcess(false)
+    }
+  }
 
   return (
     <Box
@@ -59,16 +58,19 @@ export default function TrainTerminal({ endpoint, resetKey }) {
       }}
     >
       <Stack
+
         direction="row"
-        justifyContent="space-between"
         alignItems="center"
         sx={{
+          width: "100%",
           px: 1.5,
           py: 1,
           backgroundColor: "#1b1b1b",
           borderBottom: "1px solid #2a2a2a",
+          boxSizing: "border-box",
         }}
       >
+        {/* LADO ESQUERDO */}
         <Stack direction="row" spacing={1} alignItems="center">
           <Typography
             variant="body2"
@@ -83,6 +85,18 @@ export default function TrainTerminal({ endpoint, resetKey }) {
             color={connected ? "success" : "warning"}
           />
         </Stack>
+
+        <Button
+          variant="contained"
+          size="small"
+          color="error"
+          startIcon={<StopIcon />}
+          sx={{ marginLeft: "auto", marginRight: 0 }}
+          disabled={loadingStopProcess}
+          onClick={handleStopProcess}
+        >
+          Parar processo
+        </Button>
       </Stack>
 
       <Box
