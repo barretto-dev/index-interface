@@ -1,16 +1,20 @@
 const API_BASE = `http://${window.location.hostname}:3001`;
 
 export async function startTrain() {
-  const response = await fetch(`${API_BASE}/convert/run`, {
-    method: "POST",
-  });
+  try {
+    const res = await fetch(`${API_BASE}/gaussian/train/start`, {method: "POST"});
+    const data = await res.json()
+    const message = data.message
 
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error(text);
+    if (!res.ok) 
+      return {status:"error", msg: "Erro na requisição: "+message}
+    else
+      return {status:"success", msg: message}
+    
+  } catch (error) {
+    console.log(error)
+    return {status:"error", msg: "Erro inesperado na função startTrain()"}
   }
-
-  return response.json();
 }
 
 export async function getOutputFolders() {

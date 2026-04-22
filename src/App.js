@@ -16,7 +16,7 @@ function App() {
 
   const ENUM_TERMINAL_TYPES = {
     "prepare-frames": "prepare-frames-stream",
-    "start-trainning": "convert-stream"
+    "start-trainning": "gaussian-train-stream"
   }
 
   const { showSnackbar } = useSnackbar();
@@ -68,6 +68,28 @@ function App() {
       setLoadingPrepareFrames(false)
     }
   };
+
+  const handleStartTrain = async () => {
+    try {
+      setLoadingPrepareFrames(true)
+      setResetTerminal((prev) => prev + 1);
+
+      const type = ENUM_TERMINAL_TYPES["start-trainning"]
+      setTerminalType(type)
+
+      //Fechar modal
+      setConfirmModalOpen(false)
+
+      const {status, msg} = await startTrain()
+      showSnackbar(msg, status)
+
+    } catch (error) {
+      console.error(error);
+      showSnackbar("Erro inesperado na página", "error")
+    }finally{
+      setLoadingPrepareFrames(false)
+    }
+  }
 
   const handleStopProcess = async (termType) => {
     try {
@@ -146,12 +168,7 @@ function App() {
                   onClick={() =>{handleConfirmModalOpen(
                     "Iniciando treinamento", 
                     "Tem Certeza que deseja continuar?",
-                    async () => { 
-                      setResetTerminal((prev) => prev + 1);
-                      const type = ENUM_TERMINAL_TYPES["start-trainning"]
-                      setTerminalType(type)
-                      await startTrain()
-                    ;}
+                    handleStartTrain
                   )}}
                 >
                   Iniciar Treinamento
