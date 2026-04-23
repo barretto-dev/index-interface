@@ -33,14 +33,3 @@ export async function stopTrain() {
     return {status:"error", msg: "Erro inesperado na função stopTrain()"}
   }
 }
-
-export async function getOutputFolders() {
-  const response = await fetch(`${API_BASE}/output/folders`);
-
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error(text || "Erro ao listar pastas");
-  }
-
-  return response.json();
-}

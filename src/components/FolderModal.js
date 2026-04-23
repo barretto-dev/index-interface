@@ -1,5 +1,10 @@
 import React, { useEffect, useState } from "react";
 import "./styles/modal.css";
+import { deleteOutputFolder, getOutputFolders } from "../apiRequests/outputReq";
+import { startSibr } from "../apiRequests/sbir";
+import { useSnackbar } from "../context/SnackbarContext";
+import ConfirmModal from "./ConfirmModal";
+
 import {
   Alert,
   Box,
@@ -10,12 +15,14 @@ import {
   DialogContent,
   DialogTitle,
   FormControlLabel,
+  IconButton,
   Radio,
   RadioGroup,
+  Stack,
   Typography,
 } from "@mui/material";
-import { getOutputFolders } from "../apiRequests/gaussianSplatting";
-import { startSibr } from "../apiRequests/sbir";
+
+import DeleteIcon from '@mui/icons-material/Delete';
 
 function formatDate(dateString) {
   if (!dateString) return "Data indisponível";
@@ -28,11 +35,17 @@ function formatDate(dateString) {
 }
 
 export default function FolderModal({ open, onClose, onSuccess }) {
+
+  const { showSnackbar } = useSnackbar();
+
   const [folders, setFolders] = useState([]);
   const [selectedFolder, setSelectedFolder] = useState("");
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [confirmModalOpen, setConfirmModalOpen] = useState(false)
+  const [folderToDelete, setFolderToDelete] = useState(0)
+
 
   useEffect(() => {
     if (!open) return;
@@ -47,29 +60,22 @@ export default function FolderModal({ open, onClose, onSuccess }) {
         setSelectedFolder("");
 
         const data = await getOutputFolders();
-
         if (!active) return;
 
         setFolders(data);
+        if (data.length > 0) setSelectedFolder(data[0].name);
 
-        if (data.length > 0) {
-          setSelectedFolder(data[0].name);
-        }
       } catch (err) {
         if (!active) return;
         setError(err.message || "Erro ao carregar pastas");
       } finally {
-        if (active) {
-          setLoading(false);
-        }
+        if (active) setLoading(false);
       }
     }
 
     loadFolders();
+    return () => {active = false};
 
-    return () => {
-      active = false;
-    };
   }, [open]);
 
   const handleStart = async () => {
@@ -81,8 +87,7 @@ export default function FolderModal({ open, onClose, onSuccess }) {
         setError("Por favor seleciona uma pasta")
       else{
         await startSibr(selectedFolder);
-        if (onSuccess) 
-          onSuccess(selectedFolder);
+        if (onSuccess) onSuccess(selectedFolder);
 
         onClose();
       }
@@ -94,14 +99,27 @@ export default function FolderModal({ open, onClose, onSuccess }) {
     }
   };
 
-  const handleCancel = () => {
-    if (!submitting) {
-      onClose();
+  const handleCancel = () => {if (!submitting) onClose()};
+
+  const handleDeleteTrainningFolder = async () => {
+    try {
+      const folderName = folders[folderToDelete].name
+      const {status, msg} = await deleteOutputFolder(folderName)
+
+      if(status === "success"){
+        folders.splice(folderToDelete,1)
+        setFolderToDelete(folders)
+      }
+
+      showSnackbar(msg, status)
+    } catch (error) {
+      console.error(error);
+      showSnackbar("Erro inesperado na página", "error")
     }
-  };
+  }
 
   return (
-    <Dialog open={open} onClose={handleCancel} fullWidth maxWidth="sm">
+    <Dialog open={open} onClose={handleCancel} maxWidth="sm">
       <DialogTitle className="modal-title">
         Selecionar pasta de saída
       </DialogTitle>
@@ -129,9 +147,9 @@ export default function FolderModal({ open, onClose, onSuccess }) {
             value={selectedFolder}
             onChange={(e) => setSelectedFolder(e.target.value)}
           >
-            {folders.map((folder) => (
+            {folders.map((folder, index) => (
               <Box
-                key={folder.name}
+                key={index}
                 sx={{
                   backgroundColor:"white",
                   border: "1px solid #ddd",
@@ -142,18 +160,30 @@ export default function FolderModal({ open, onClose, onSuccess }) {
                 }}
               >
                 <FormControlLabel
-                  value={folder.name}
+                  value={index}
                   control={<Radio />}
                   label={
-                    <Box>
-                      <Typography fontWeight={600}>{folder.name}</Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Criação: {formatDate(folder.createdAt)}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Modificação: {formatDate(folder.modifiedAt)}
-                      </Typography>
-                    </Box>
+                    <Stack direction="row" spacing={3} sx={{ mb: 1 }}>
+                      <Box>
+                        <Typography fontWeight={600}>{folder.name}</Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          Criação: {formatDate(folder.createdAt)}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          Modificação: {formatDate(folder.modifiedAt)}
+                        </Typography>
+                      </Box>
+                      <IconButton 
+                        color="error"
+                        onClick={()=> {
+                          setConfirmModalOpen(true)
+                          setFolderToDelete(index)
+                        }} 
+                      >
+                        <DeleteIcon/>
+                      </IconButton>
+                    </Stack>
+                    // 
                   }
                 />
               </Box>
@@ -177,6 +207,14 @@ export default function FolderModal({ open, onClose, onSuccess }) {
           {submitting ? "Iniciando..." : "Iniciar"}
         </Button>
       </DialogActions>
+
+       <ConfirmModal
+          open={confirmModalOpen}
+          onClose={() => setConfirmModalOpen(false)}
+          onConfirm={handleDeleteTrainningFolder}
+          title={"Confirmação de remoção de treinamento"}
+          message={"Tem certeza que deseja remover está pasta?"}
+        />
     </Dialog>
   );
 }
