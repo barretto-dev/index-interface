@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { Box, Button, Chip, Stack, Typography } from "@mui/material";
 import StopIcon from '@mui/icons-material/Stop';
 
-export default function TrainTerminal({ endpoint, resetKey, stopProccesFunction }) {
+export default function ProcessWindow({ endpoint, resetKey, stopProccesFunction }) {
   const [logs, setLogs] = useState("");
   const [connected, setConnected] = useState(false);
   const [loadingStopProcess, setLoadingStopProcess] = useState(false)

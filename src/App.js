@@ -6,7 +6,7 @@ import {Button, Stack, CircularProgress} from "@mui/material";
 import { useSnackbar } from "./context/SnackbarContext";
 
 import CameraWindow from "./components/CameraWindow";
-import TrainTerminal from "./components/TrainTerminal";
+import ProcessWindow from "./components/ProcessWindow";
 import FolderModal from "./components/FolderModal";
 import ConfirmModal from "./components/ConfirmModal";
 
@@ -195,7 +195,7 @@ function App() {
           </div>
 
           <div className="section">
-            <TrainTerminal 
+            <ProcessWindow 
               endpoint={terminalType} 
               resetKey={resetTerminal}
               stopProccesFunction={handleStopProcess}
