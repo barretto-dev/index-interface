@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import "./styles/modal.css";
 import { deleteOutputFolder, getOutputFolders } from "../apiRequests/outputReq";
-import { startSibr } from "../apiRequests/sbir";
+import { startSibr } from "../apiRequests/sbirReq";
 import { useSnackbar } from "../context/SnackbarContext";
 import ConfirmModal from "./ConfirmModal";
 

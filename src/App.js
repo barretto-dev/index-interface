@@ -10,8 +10,8 @@ import ProcessWindow from "./components/ProcessWindow";
 import FolderModal from "./components/FolderModal";
 import ConfirmModal from "./components/ConfirmModal";
 
-import { downloadAndSaveZip, startPreparetion, stopPreparation } from "./apiRequests/image";
-import { startTrain, stopTrain } from "./apiRequests/gaussianSplatting";
+import { downloadAndSaveZip, startPreparetion, stopPreparation } from "./apiRequests/imageReq";
+import { startTrain, stopTrain } from "./apiRequests/gaussianSplattingReq";
 
 function App() {
 

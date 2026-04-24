@@ -12,7 +12,7 @@ import {
 } from "@mui/material";
 
 import JSMpeg from "jsmpeg-player"; 
-import { startRecord, stopRecord } from "../apiRequests/camera";
+import { startRecord, stopRecord } from "../apiRequests/cameraReq";
 
 export default function CameraWindow() {
 
