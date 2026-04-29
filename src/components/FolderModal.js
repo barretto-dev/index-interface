@@ -39,7 +39,7 @@ export default function FolderModal({ open, onClose, onSuccess }) {
   const { showSnackbar } = useSnackbar();
 
   const [folders, setFolders] = useState([]);
-  const [selectedFolder, setSelectedFolder] = useState("");
+  const [selectedFolderIndex, setSelectedFolderIndex] = useState(null);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -57,13 +57,13 @@ export default function FolderModal({ open, onClose, onSuccess }) {
         setLoading(true);
         setError("");
         setFolders([]);
-        setSelectedFolder("");
+        setSelectedFolderIndex(null);
 
         const data = await getOutputFolders();
         if (!active) return;
 
         setFolders(data);
-        if (data.length > 0) setSelectedFolder(data[0].name);
+        if (data.length > 0) setSelectedFolderIndex(0);
 
       } catch (err) {
         if (!active) return;
@@ -83,11 +83,12 @@ export default function FolderModal({ open, onClose, onSuccess }) {
       setSubmitting(true);
       setError("");
 
-      if(selectedFolder === "")
+      if(selectedFolderIndex === null)
         setError("Por favor seleciona uma pasta")
       else{
-        await startSibr(selectedFolder);
-        if (onSuccess) onSuccess(selectedFolder);
+        const folder_selected = folders[selectedFolderIndex].name
+        await startSibr(folder_selected);
+        if (onSuccess) onSuccess(selectedFolderIndex);
 
         onClose();
       }
@@ -144,8 +145,8 @@ export default function FolderModal({ open, onClose, onSuccess }) {
 
         {!loading && !error && folders.length > 0 && (
           <RadioGroup
-            value={selectedFolder}
-            onChange={(e) => setSelectedFolder(e.target.value)}
+            value={selectedFolderIndex}
+            onChange={(e) => setSelectedFolderIndex(e.target.value)}
           >
             {folders.map((folder, index) => (
               <Box
@@ -201,7 +202,7 @@ export default function FolderModal({ open, onClose, onSuccess }) {
           variant="contained"
           onClick={handleStart}
           disabled={
-            submitting || loading || folders.length === 0 || !selectedFolder
+            submitting || loading || folders.length === 0 || selectedFolderIndex == null
           }
         >
           {submitting ? "Iniciando..." : "Iniciar"}
