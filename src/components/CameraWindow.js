@@ -9,14 +9,21 @@ import {
   CircularProgress,
   Switch,
   FormControlLabel,
+  IconButton,
 } from "@mui/material";
 
 import JSMpeg from "jsmpeg-player"; 
 import { startRecord, stopRecord } from "../apiRequests/cameraReq";
+import { useGlobal } from "../context/GlobalContext";
+import SettingsModal from "./SettingsModal"
+import SettingsIcon from '@mui/icons-material/Settings';
 
 export default function CameraWindow() {
 
-  const WS_URL = "ws://192.168.0.20:8765";
+  const {cameraUrl, cameraPort, droneApiUrl, droneApiPort} = useGlobal()
+
+  const [settingsOpen, setSettingsOpen] = React.useState(false);
+
   const TIMEOUT_CONNECTION = 15000
 
   const canvasRef = useRef(null);
@@ -43,7 +50,7 @@ export default function CameraWindow() {
       clearInterval(interval);
       setRecordTime(0)
     }
-  
+
     return () => clearInterval(interval);
   }, [isRecordOn]);
 
@@ -83,8 +90,9 @@ export default function CameraWindow() {
       if (playerRef.current) destroyPlayer()
 
       firstFrameRenderedRef.current = false;
+      const ws_url = "ws://"+cameraUrl+":"+cameraPort
 
-      playerRef.current = new JSMpeg.Player(WS_URL, {
+      playerRef.current = new JSMpeg.Player(ws_url, {
         canvas: canvasRef.current,
         autoplay: true,
         audio: false,
@@ -217,7 +225,9 @@ export default function CameraWindow() {
                 {formatTime(recordTime)}
               </Typography>
             )}
-           
+           <IconButton onClick={() => setSettingsOpen(true)}>
+              <SettingsIcon />
+            </IconButton>
           </Stack>
 
           <Box
@@ -257,6 +267,10 @@ export default function CameraWindow() {
           </Box>
         </CardContent>
       </Card>
+      <SettingsModal
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+      />
     </Box>
   );
 }

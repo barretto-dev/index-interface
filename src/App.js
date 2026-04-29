@@ -4,6 +4,7 @@ import './App.css';
 import {Button, Stack, Typography, Box} from "@mui/material";
 
 import { useSnackbar } from "./context/SnackbarContext";
+import { useGlobal } from "./context/GlobalContext";
 
 import CameraWindow from "./components/CameraWindow";
 import ProcessWindow from "./components/ProcessWindow";
@@ -23,6 +24,7 @@ function App() {
   }
 
   const { showSnackbar } = useSnackbar();
+  const { droneApiUrl, droneApiPort} = useGlobal()
   
   const [folderModalOpen, setFolderModalOpen] = useState(false);
 
@@ -62,7 +64,7 @@ function App() {
   }
 
   const getFrames = async () => {
-     const framesRes = await downloadAndSaveZip();
+     const framesRes = await downloadAndSaveZip(droneApiUrl, droneApiPort);
       if(framesRes.status === "error"){
         showSnackbar(framesRes.msg, framesRes.status);
         return false

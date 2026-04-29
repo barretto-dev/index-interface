@@ -1,8 +1,12 @@
 const API_BASE = `http://${window.location.hostname}:3001`;
 
-export async function downloadAndSaveZip() {
+export async function downloadAndSaveZip(droneApiUrl, droneApiPort) {
   try {
-    const res = await fetch(`${API_BASE}/images/download-and-save`);
+    const res = await fetch(`${API_BASE}/images/download-and-save`, {
+      method: "POST",
+      headers: {"Content-Type": "application/json",},
+      body: JSON.stringify({droneApiUrl, droneApiPort})
+    });
     const data = await res.json()
     const message = data.message
 
