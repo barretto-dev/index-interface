@@ -1,17 +1,19 @@
 import React, { useState } from "react";
 import logo from "./assets/logo-cimatec.png";
 import './App.css';
-import {Button, Stack, CircularProgress} from "@mui/material";
+import {Button, Stack, Typography, Box} from "@mui/material";
 
 import { useSnackbar } from "./context/SnackbarContext";
 
 import CameraWindow from "./components/CameraWindow";
 import ProcessWindow from "./components/ProcessWindow";
 import FolderModal from "./components/FolderModal";
-import ConfirmModal from "./components/ConfirmModal";
 
 import { downloadAndSaveZip, startPreparetion, stopPreparation } from "./apiRequests/imageReq";
 import { startTrain, stopTrain } from "./apiRequests/gaussianSplattingReq";
+import { getOutputFolders } from "./apiRequests/outputReq";
+import { startSibr } from "./apiRequests/sbirReq";
+import CircularProgressWithLabel from "./components/CircularProgressWithLabel";
 
 function App() {
 
@@ -23,74 +25,13 @@ function App() {
   const { showSnackbar } = useSnackbar();
   
   const [folderModalOpen, setFolderModalOpen] = useState(false);
-  const [confirmModalOpen, setConfirmModalOpen] = useState(false);
 
-  const [confirmModalTitle, setConfirmModalTitle] = useState("")
-  const [confirmModalMessage, setConfirmModalMessage] = useState("")
-  const [confirmModalAction, setConfirmModalAction] = useState(null)
-
-  const [loadingGetFrames, setLoadingGetFrames] = useState(false)
-  const [loadingPrepareFrames, setLoadingPrepareFrames] = useState(false)
-  const [loadingTrainFrames, setLoadingTrainFrames] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [loadingProgress, setLoadingProgress] = useState(0)
+  const [loadingMessage, setLoadingMessage] = useState("")
 
   const [terminalType, setTerminalType] = useState(null); 
   const [resetTerminal, setResetTerminal] = useState(0);
-
-  const disableMenuButtons = loadingGetFrames || loadingPrepareFrames || loadingTrainFrames
-
-  const handleGetFrames = async () => {
-    try {
-      setLoadingGetFrames(true)
-      const {status, msg} = await downloadAndSaveZip();
-      showSnackbar(msg, status)
-    } catch (err) {
-      console.error(err);
-      showSnackbar("Erro inesperado em na página", "error")
-    }finally{
-      setLoadingGetFrames(false)
-    }
-  };
-
-  const handlePrepareFrames = async () => {
-    try {
-      setLoadingPrepareFrames(true)
-      setResetTerminal((prev) => prev + 1);
-
-      const type = ENUM_TERMINAL_TYPES["prepare-frames"]
-      setTerminalType(type)
-
-      const {status, msg} = await startPreparetion();
-      showSnackbar(msg, status)
-
-    } catch (err) {
-      console.error(err);
-      showSnackbar("Erro inesperado na página", "error")
-    }finally{
-      setLoadingPrepareFrames(false)
-    }
-  };
-
-  const handleStartTrain = async () => {
-    try {
-      setLoadingTrainFrames(true)
-      setResetTerminal((prev) => prev + 1);
-
-      const type = ENUM_TERMINAL_TYPES["start-trainning"]
-      setTerminalType(type)
-
-      //Fechar modal
-      setConfirmModalOpen(false)
-
-      const {status, msg} = await startTrain()
-      showSnackbar(msg, status)
-
-    } catch (error) {
-      console.error(error);
-      showSnackbar("Erro inesperado na página", "error")
-    }finally{
-      setLoadingTrainFrames(false)
-    }
-  }
 
   const handleStopProcess = async (termType) => {
     try {
@@ -112,8 +53,7 @@ function App() {
       }
 
       showSnackbar(msg, status)
-      setLoadingGetFrames(false)
-      setLoadingTrainFrames(false)
+      setLoading(false)
       
     } catch (err) {
       console.error(err);
@@ -121,11 +61,85 @@ function App() {
     }
   }
 
-  const handleConfirmModalOpen = (title, message, action) => {
-      setConfirmModalTitle(title)
-      setConfirmModalMessage(message)
-      setConfirmModalAction(() => action)
-      setConfirmModalOpen(true)
+  const getFrames = async () => {
+     const framesRes = await downloadAndSaveZip();
+      if(framesRes.status === "error"){
+        showSnackbar(framesRes.msg, framesRes.status);
+        return false
+      }
+      return true
+  }
+
+  const startFramePreparation = async () => {
+    setResetTerminal((prev) => prev + 1);
+    setTerminalType(ENUM_TERMINAL_TYPES["prepare-frames"]);
+    const prepareRes = await startPreparetion();
+
+    if(prepareRes.status === "error"){
+      showSnackbar(prepareRes.msg, prepareRes.status);
+      return false
+    }
+    return true
+  }
+
+  const startTrainning = async () => {
+    setResetTerminal((prev) => prev + 1);
+    setTerminalType(ENUM_TERMINAL_TYPES["start-trainning"]);
+
+    const trainRes = await startTrain();
+    if(trainRes.status === "error"){
+      showSnackbar(trainRes.msg, trainRes.status);
+      return false
+    }
+    return true
+  }
+
+  const getNewReconstructionName = async () => {
+    const folder_list = await getOutputFolders();
+    if(folder_list.length === 0){
+      showSnackbar("Não foi encontrado nenhum pasta de reconstrução", "error");
+      return null
+    }
+    return folder_list[0].name
+  }
+
+  const handleRunFullProcess = async () => {
+    try {
+      setLoading(true)
+
+      setLoadingProgress(0)
+      setLoadingMessage("Recebendo frames...")
+      let result = await getFrames()
+      if (!result) return
+
+      
+      setLoadingProgress(10)
+      setLoadingMessage("Preparando frames...")
+      result = await startFramePreparation()
+      if (!result) return
+
+      setLoadingProgress(40)
+      setLoadingMessage("Iniciando treinamento...")
+      result = await startTrainning()
+      if (!result) return
+      
+      setLoadingProgress(90)
+      setLoadingMessage("Buscando nova reconstrução...")
+      const reconstruction_name = await getNewReconstructionName()
+      if (reconstruction_name == null) return
+
+      setLoadingProgress(95)
+      setLoadingMessage("Abrindo visualizador...")
+      await startSibr(reconstruction_name);
+
+    } catch (err) {
+      console.error(err);
+      showSnackbar("Erro inesperado na página", "error");
+    } finally {
+      setLoading(false)
+      setLoadingMessage("")
+      setLoadingProgress(0)
+    }
   };
 
   return (
@@ -149,49 +163,26 @@ function App() {
         {/* LADO DIREITO */}
         <div className="right">
           <div className="section">
-             <Stack direction="column" spacing={3} sx={{ mb: 1 }}>
-                <Button 
-                  variant="contained" 
-                  onClick={handleGetFrames} 
-                  disabled={disableMenuButtons}
-                  endIcon={
-                    loadingGetFrames ? <CircularProgress size={18} color="inherit" /> : null
-                  }
-                >
-                  Receber Frames
-                </Button>
-                <Button 
-                  variant="contained" 
-                  onClick={handlePrepareFrames}
-                  disabled={disableMenuButtons}
-                  endIcon={
-                    loadingPrepareFrames ? <CircularProgress size={18} color="inherit" /> : null
-                  }
-                >
-                  Preparar Frames
-                </Button>
-                <Button 
-                  variant="contained"
-                  disabled={disableMenuButtons}
-                  endIcon={
-                    loadingTrainFrames ? <CircularProgress size={18} color="inherit" /> : null
-                  }
-                  onClick={() =>{handleConfirmModalOpen(
-                    "Iniciando treinamento", 
-                    "Tem Certeza que deseja continuar?",
-                    handleStartTrain
-                  )}}
-                >
-                  Iniciar Treinamento
-                </Button>
-                <Button 
-                  variant="contained" 
-                  disabled={disableMenuButtons}
-                  onClick={() => setFolderModalOpen(true)}
-                >
-                  Visualizar
-                </Button>
-             </Stack>
+              {
+                loading ? ( 
+                  <Box sx={{display: 'flex', flexDirection: 'column', alignItems: 'center',}}>
+                    <CircularProgressWithLabel value={loadingProgress} size={100}/>
+                    <Typography variant="h6" component="div" sx={{ mt:"15px", color: 'text.secondary' }}>
+                      {loadingMessage}
+                    </Typography>
+                  </Box>
+                ) :
+                (
+                  <Stack direction="column" spacing={3} sx={{ mb: 1 }}>
+                    <Button variant="contained" onClick={handleRunFullProcess}>
+                      Iniciar nova reconstrução
+                    </Button>
+                    <Button variant="contained" onClick={() => setFolderModalOpen(true)} >
+                      Visualizar reconstruções anteriores
+                    </Button>
+                  </Stack>
+                )
+              }
           </div>
 
           <div className="section">
@@ -207,17 +198,7 @@ function App() {
       <FolderModal
         open={folderModalOpen}
         onClose={() => setFolderModalOpen(false)}
-        onSuccess={(folderName) => {
-          console.log("SIBR iniciado com:", folderName);
-        }}
-      />
-
-      <ConfirmModal
-        open={confirmModalOpen}
-        onClose={() => setConfirmModalOpen(false)}
-        onConfirm={confirmModalAction}
-        title={confirmModalTitle}
-        message={confirmModalMessage}
+        onSuccess={(folderName) => {console.log("SIBR iniciado com:", folderName);}}
       />
 
     </div>
