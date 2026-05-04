@@ -17,6 +17,7 @@ import { startRecord, stopRecord } from "../apiRequests/cameraReq";
 import { useGlobal } from "../context/GlobalContext";
 import SettingsModal from "./SettingsModal"
 import SettingsIcon from '@mui/icons-material/Settings';
+import PointCloudWindow from "./PointCloudWindow";
 
 export default function CameraWindow() {
 
@@ -233,37 +234,66 @@ export default function CameraWindow() {
           <Box
             sx={{
               flex: 1,
-              backgroundColor: "#000",
               display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              overflow: "hidden",
+              gap: 1,
               minHeight: 0,
-              position: "relative",
             }}
           >
-            <canvas ref={canvasRef} width={1280} height={720} style={{ width: "100%", height: "100%", display: "block",}}/>
-
-            {loading && (
-              <Box
-                sx={{
-                  position: "absolute",
-                  inset: 0,
-                  backgroundColor: "rgba(0, 0, 0, 0.65)",
-                  display: "flex",
-                  flexDirection: "column",
-                  justifyContent: "center",
-                  alignItems: "center",
-                  gap: 2,
-                  zIndex: 2,
+            <Box
+              sx={{
+                flex: 1,
+                backgroundColor: "#000",
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                overflow: "hidden",
+                minHeight: 0,
+                position: "relative",
+              }}
+            >
+              <canvas
+                ref={canvasRef}
+                width={1280}
+                height={720}
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  display: "block",
                 }}
-              >
-                <CircularProgress sx={{color:"#fff"}} />
-                <Typography sx={{ color: "#fff" }}>
-                  {loadingMessage || "Carregando..."}
-                </Typography>
-              </Box>
-            )}
+              />
+
+              {loading && (
+                <Box
+                  sx={{
+                    position: "absolute",
+                    inset: 0,
+                    backgroundColor: "rgba(0, 0, 0, 0.65)",
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    gap: 2,
+                    zIndex: 2,
+                  }}
+                >
+                  <CircularProgress sx={{ color: "#fff" }} />
+                  <Typography sx={{ color: "#fff" }}>
+                    {loadingMessage || "Carregando..."}
+                  </Typography>
+                </Box>
+              )}
+            </Box>
+
+            <Box
+              sx={{
+                flex: 1,
+                backgroundColor: "#101214",
+                minHeight: 0,
+                overflow: "hidden",
+              }}
+            >
+              <PointCloudWindow isCameraOn={isCameraOn} wsUrl="ws://127.0.0.1:8765" />
+            </Box>
           </Box>
         </CardContent>
       </Card>

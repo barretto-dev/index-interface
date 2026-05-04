@@ -4,7 +4,7 @@ const GlobalContext = createContext();
 
 export function GlobalProvider({ children }) {
   const [cameraUrl, setCameraUrl] = useState("192.168.0.20");
-  const [cameraPort, setCameraPort] = useState("8765");
+  const [cameraPort, setCameraPort] = useState("8554");
 
   const [droneApiUrl, setDroneApiUrl] = useState("192.168.0.20")
   const [droneApiPort, setDroneApiPort] = useState("8080");
