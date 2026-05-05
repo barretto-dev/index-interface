@@ -9,6 +9,8 @@ export default function SettingsModal({ open, onClose }) {
   const [inputDroneApiUrl, setInputDroneApiUrl] = useState("");
   const [inputDroneApiPort, setInputDroneApiPort] = useState("");
   const [inputRecordMode, setInputRecordMode] = useState("api");
+  const [inputRtmpUrl, setInputRtmpUrl] = useState("");
+  const [inputRtmpPreviewFps, setInputRtmpPreviewFps] = useState("60");
 
 
   const { 
@@ -16,7 +18,9 @@ export default function SettingsModal({ open, onClose }) {
     cameraPort, setCameraPort,
     droneApiUrl, setDroneApiUrl,
     droneApiPort, setDroneApiPort,
-    recordMode, setRecordMode } = useGlobal()
+    recordMode, setRecordMode,
+    rtmpUrl, setRtmpUrl,
+    rtmpPreviewFps, setRtmpPreviewFps } = useGlobal()
 
 
     useEffect(() => {
@@ -25,6 +29,8 @@ export default function SettingsModal({ open, onClose }) {
         setInputDroneApiUrl(droneApiUrl)
         setInputDroneApiPort(droneApiPort)
         setInputRecordMode(recordMode)
+        setInputRtmpUrl(rtmpUrl)
+        setInputRtmpPreviewFps(rtmpPreviewFps)
     }, [open]);
 
 
@@ -34,6 +40,8 @@ export default function SettingsModal({ open, onClose }) {
     setDroneApiUrl(inputDroneApiUrl)
     setDroneApiPort(inputDroneApiPort)
     setRecordMode(inputRecordMode)
+    setRtmpUrl(inputRtmpUrl)
+    setRtmpPreviewFps(inputRtmpPreviewFps)
     onClose();
 
   };
@@ -99,8 +107,28 @@ export default function SettingsModal({ open, onClose }) {
             >
               <FormControlLabel value="api" control={<Radio />} label="API (Drone)" />
               <FormControlLabel value="live_stream" control={<Radio />} label="Live Stream (Fallback)" />
+              <FormControlLabel value="rtmp" control={<Radio />} label="RTMP" />
             </RadioGroup>
           </FormControl>
+
+          <TextField
+            label="RTMP URL"
+            value={inputRtmpUrl}
+            onChange={(e) => setInputRtmpUrl(e.target.value)}
+            placeholder="rtmp://host/app/stream"
+            fullWidth
+            disabled={inputRecordMode !== "rtmp"}
+          />
+
+          <TextField
+            label="RTMP Preview FPS"
+            type="number"
+            value={inputRtmpPreviewFps}
+            onChange={(e) => setInputRtmpPreviewFps(e.target.value)}
+            inputProps={{ min: 1, max: 120 }}
+            fullWidth
+            disabled={inputRecordMode !== "rtmp"}
+          />
 
 
           <Stack direction="row" spacing={2} justifyContent="flex-end">

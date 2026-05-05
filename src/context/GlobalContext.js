@@ -8,7 +8,9 @@ export function GlobalProvider({ children }) {
 
   const [droneApiUrl, setDroneApiUrl] = useState("192.168.0.20")
   const [droneApiPort, setDroneApiPort] = useState("8080");
-  const [recordMode, setRecordMode] = useState("api"); // 'api' ou 'live_stream'
+  const [recordMode, setRecordMode] = useState("api"); // 'api', 'live_stream' ou 'rtmp'
+  const [rtmpUrl, setRtmpUrl] = useState("rtmp://192.168.0.20/live/stream");
+  const [rtmpPreviewFps, setRtmpPreviewFps] = useState("60");
 
 
   return (
@@ -18,6 +20,8 @@ export function GlobalProvider({ children }) {
         droneApiUrl, setDroneApiUrl,
         droneApiPort, setDroneApiPort,
         recordMode, setRecordMode,
+        rtmpUrl, setRtmpUrl,
+        rtmpPreviewFps, setRtmpPreviewFps,
     }}>
 
       {children}

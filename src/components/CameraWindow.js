@@ -21,7 +21,7 @@ import PointCloudWindow from "./PointCloudWindow";
 
 export default function CameraWindow() {
 
-  const { cameraUrl, cameraPort, droneApiUrl, droneApiPort, recordMode } = useGlobal()
+  const { cameraUrl, cameraPort, recordMode, rtmpUrl, rtmpPreviewFps } = useGlobal()
 
 
   const [settingsOpen, setSettingsOpen] = React.useState(false);
@@ -92,7 +92,9 @@ export default function CameraWindow() {
       if (playerRef.current) destroyPlayer()
 
       firstFrameRenderedRef.current = false;
-      const ws_url = "ws://" + cameraUrl + ":" + cameraPort
+      const ws_url = recordMode === "rtmp"
+        ? `ws://${window.location.hostname}:3001/rtmp-preview?url=${encodeURIComponent(rtmpUrl)}&fps=${encodeURIComponent(rtmpPreviewFps)}`
+        : "ws://" + cameraUrl + ":" + cameraPort
 
       playerRef.current = new JSMpeg.Player(ws_url, {
         canvas: canvasRef.current,
@@ -180,7 +182,8 @@ export default function CameraWindow() {
       
       const fallbackConfig = {
         wsUrl: "ws://" + cameraUrl + ":" + cameraPort,
-        recordMode: recordMode
+        recordMode: recordMode,
+        rtmpUrl: rtmpUrl
       };
 
 

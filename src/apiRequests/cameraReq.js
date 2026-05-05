@@ -3,6 +3,9 @@ export async function startRecord(fallbackConfig) {
   if (fallbackConfig.recordMode === "live_stream") {
     return await startRecordFallback(fallbackConfig);
   }
+  if (fallbackConfig.recordMode === "rtmp") {
+    return await startRecordRtmp(fallbackConfig);
+  }
 
   try {
     const controller = new AbortController();
@@ -53,9 +56,33 @@ async function startRecordFallback(config) {
   }
 }
 
+async function startRecordRtmp(config) {
+  try {
+    const res = await fetch(`http://${window.location.hostname}:3001/images/record-rtmp/start`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ rtmpUrl: config.rtmpUrl })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok)
+      return { status: "error", msg: "Falha ao iniciar gravação RTMP: " + (data.message || "") }
+    else
+      return { status: "success", msg: "Gravação iniciada (RTMP)" }
+
+  } catch (error) {
+    console.log(error)
+    return { status: "error", msg: "Erro ao tentar iniciar gravação RTMP" }
+  }
+}
+
 export async function stopRecord(fallbackConfig) {
   if (fallbackConfig.recordMode === "live_stream") {
     return await stopRecordFallback();
+  }
+  if (fallbackConfig.recordMode === "rtmp") {
+    return await stopRecordRtmp();
   }
 
   try {
@@ -101,5 +128,24 @@ async function stopRecordFallback() {
   } catch (error) {
     console.log(error)
     return { status: "error", msg: "Erro ao tentar encerrar gravação de fallback" }
+  }
+}
+
+async function stopRecordRtmp() {
+  try {
+    const res = await fetch(`http://${window.location.hostname}:3001/images/record-rtmp/stop`, {
+      method: "POST",
+    });
+
+    const data = await res.json();
+
+    if (!res.ok)
+      return { status: "error", msg: "Falha ao encerrar gravação RTMP: " + (data.message || "") }
+    else
+      return { status: "success", msg: "Gravação encerrada (RTMP)" }
+
+  } catch (error) {
+    console.log(error)
+    return { status: "error", msg: "Erro ao tentar encerrar gravação RTMP" }
   }
 }

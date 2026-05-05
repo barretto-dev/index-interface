@@ -111,7 +111,7 @@ function App() {
       setLoading(true)
       let result;
 
-      if (recordMode !== "live_stream") {
+      if (recordMode === "api") {
         setLoadingProgress(0)
         setLoadingMessage("Recebendo frames...")
         result = await getFrames()
