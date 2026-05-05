@@ -22,6 +22,7 @@ import PointCloudWindow from "./PointCloudWindow";
 export default function CameraWindow() {
 
   const { cameraUrl, cameraPort, recordMode, rtmpUrl, rtmpPreviewFps } = useGlobal()
+  const pointCloudWsUrl = process.env.REACT_APP_POINTCLOUD_WS_URL || `ws://${window.location.hostname}:8764`;
 
 
   const [settingsOpen, setSettingsOpen] = React.useState(false);
@@ -328,7 +329,7 @@ export default function CameraWindow() {
                 overflow: "hidden",
               }}
             >
-              <PointCloudWindow isPointCloudOn={isPointCloudOn} wsUrl="ws://127.0.0.1:8764" />
+              <PointCloudWindow isPointCloudOn={isPointCloudOn} wsUrl={pointCloudWsUrl} />
             </Box>
           </Box>
         </CardContent>

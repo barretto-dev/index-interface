@@ -50,29 +50,38 @@ export default function PointCloudWindow({ wsUrl, isPointCloudOn }) {
       const data = new Float32Array(buffer);
       const count = Math.floor(data.length / 6);
 
-      const positions = new Float32Array(count * 3);
-      const colors = new Float32Array(count * 3);
+      const positions = [];
+      const colors = [];
 
-      for (let i = 0, p = 0, c = 0; i < count; i++) {
+      for (let i = 0; i < count; i++) {
         const offset = i * 6;
+        const x = data[offset + 0];
+        const y = data[offset + 1];
+        const z = data[offset + 2];
+        const r = data[offset + 3];
+        const g = data[offset + 4];
+        const b = data[offset + 5];
 
-        positions[p++] = data[offset + 0];
-        positions[p++] = -data[offset + 1];
-        positions[p++] = -data[offset + 2];
+        if (![x, y, z, r, g, b].every(Number.isFinite)) {
+          continue;
+        }
 
-        colors[c++] = data[offset + 3];
-        colors[c++] = data[offset + 4];
-        colors[c++] = data[offset + 5];
+        positions.push(x, -y, -z);
+        colors.push(r, g, b);
+      }
+
+      if (positions.length === 0) {
+        return;
       }
 
       const geometry = new THREE.BufferGeometry();
       geometry.setAttribute(
         "position",
-        new THREE.BufferAttribute(positions, 3)
+        new THREE.BufferAttribute(new Float32Array(positions), 3)
       );
       geometry.setAttribute(
         "color",
-        new THREE.BufferAttribute(colors, 3)
+        new THREE.BufferAttribute(new Float32Array(colors), 3)
       );
       geometry.computeBoundingSphere();
 
