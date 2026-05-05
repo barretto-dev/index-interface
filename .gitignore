@@ -4,3 +4,4 @@ node_modules/
 # Build (React)
 build/
 dist/
+*lock.json  
