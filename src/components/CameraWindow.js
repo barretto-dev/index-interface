@@ -23,6 +23,10 @@ export default function CameraWindow() {
 
   const { cameraUrl, cameraPort, recordMode, rtmpUrl, rtmpPreviewFps } = useGlobal()
   const pointCloudWsUrl = process.env.REACT_APP_POINTCLOUD_WS_URL || `ws://${window.location.hostname}:8764`;
+  const streamHost = ["127.0.0.1", "localhost", "0.0.0.0"].includes(cameraUrl)
+    ? window.location.hostname
+    : cameraUrl;
+  const cameraWsUrl = "ws://" + streamHost + ":" + cameraPort;
 
 
   const [settingsOpen, setSettingsOpen] = React.useState(false);
@@ -96,7 +100,7 @@ export default function CameraWindow() {
       firstFrameRenderedRef.current = false;
       const ws_url = recordMode === "rtmp"
         ? `ws://${window.location.hostname}:3001/rtmp-preview?url=${encodeURIComponent(rtmpUrl)}&fps=${encodeURIComponent(rtmpPreviewFps)}`
-        : "ws://" + cameraUrl + ":" + cameraPort
+        : cameraWsUrl
 
       playerRef.current = new JSMpeg.Player(ws_url, {
         canvas: canvasRef.current,
@@ -191,7 +195,7 @@ export default function CameraWindow() {
       setLoadingMessage("Iniciando gravação...");
 
       const fallbackConfig = {
-        wsUrl: "ws://" + cameraUrl + ":" + cameraPort,
+        wsUrl: cameraWsUrl,
         recordMode: recordMode,
         rtmpUrl: rtmpUrl
       };
