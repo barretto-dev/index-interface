@@ -25,10 +25,10 @@ export default function PointCloudWindow({ wsUrl, isCameraOn  }) {
       200
     );
 
-    camera.position.set(0, -2.2, 1.4);
+    camera.position.set(0.026, 0.023, 0.927)
 
     const controls = new OrbitControls(camera, renderer.domElement);
-    controls.target.set(0, 0, 1.2);
+
     controls.enableDamping = true;
 
     const grid = new THREE.GridHelper(10, 20, 0x3a4248, 0x252b30);
@@ -46,6 +46,9 @@ export default function PointCloudWindow({ wsUrl, isCameraOn  }) {
     let animationId = null;
 
     const setCloud = (buffer) => {
+
+      if (!isCameraOn) return;
+
       const data = new Float32Array(buffer);
       const count = Math.floor(data.length / 6);
 
@@ -65,6 +68,7 @@ export default function PointCloudWindow({ wsUrl, isCameraOn  }) {
       }
 
       const geometry = new THREE.BufferGeometry();
+
       geometry.setAttribute(
         "position",
         new THREE.BufferAttribute(positions, 3)
@@ -76,7 +80,7 @@ export default function PointCloudWindow({ wsUrl, isCameraOn  }) {
       geometry.computeBoundingSphere();
 
       if (cloud) {
-        cloud.geometry.dispose();
+        cloud.geometry.dispose()
         cloud.geometry = geometry;
       } else {
         cloud = new THREE.Points(geometry, material);
@@ -84,14 +88,16 @@ export default function PointCloudWindow({ wsUrl, isCameraOn  }) {
       }
     };
 
-    socket = new WebSocket(wsUrl);
-    socket.binaryType = "arraybuffer";
+    if (isCameraOn) {
+      socket = new WebSocket(wsUrl);
+      socket.binaryType = "arraybuffer";
 
-    socket.onmessage = (event) => {
-      if (event.data instanceof ArrayBuffer) {
-        setCloud(event.data);
-      }
-    };
+      socket.onmessage = (event) => {
+        if (event.data instanceof ArrayBuffer) {
+          setCloud(event.data);
+        }
+      };
+    }
 
     const handleResize = () => {
       camera.aspect = container.clientWidth / container.clientHeight;
