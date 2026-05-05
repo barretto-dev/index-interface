@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { Modal, Box, Typography, Stack, TextField, Button } from "@mui/material";
+import { Modal, Box, Typography, Stack, TextField, Button, Radio, RadioGroup, FormControlLabel, FormControl, FormLabel } from "@mui/material";
+
 import { useGlobal } from "../context/GlobalContext";
 
 export default function SettingsModal({ open, onClose }) {
@@ -7,26 +8,34 @@ export default function SettingsModal({ open, onClose }) {
   const [inputCameraPort, setInputCameraPort] = useState("");
   const [inputDroneApiUrl, setInputDroneApiUrl] = useState("");
   const [inputDroneApiPort, setInputDroneApiPort] = useState("");
+  const [inputRecordMode, setInputRecordMode] = useState("api");
+
 
   const { 
     cameraUrl, setCameraUrl,
     cameraPort, setCameraPort,
     droneApiUrl, setDroneApiUrl,
-    droneApiPort, setDroneApiPort } = useGlobal()
+    droneApiPort, setDroneApiPort,
+    recordMode, setRecordMode } = useGlobal()
+
 
     useEffect(() => {
         setInputCameraUrl(cameraUrl)
         setInputCameraPort(cameraPort)
         setInputDroneApiUrl(droneApiUrl)
         setInputDroneApiPort(droneApiPort)
+        setInputRecordMode(recordMode)
     }, [open]);
+
 
   const handleSave = () => {
     setCameraUrl(inputCameraUrl)
     setCameraPort(inputCameraPort)
     setDroneApiUrl(inputDroneApiUrl)
     setDroneApiPort(inputDroneApiPort)
+    setRecordMode(inputRecordMode)
     onClose();
+
   };
 
   return (
@@ -80,6 +89,19 @@ export default function SettingsModal({ open, onClose }) {
               fullWidth
             />
           </Stack>
+
+          <FormControl>
+            <FormLabel>Modo de Gravação</FormLabel>
+            <RadioGroup
+              row
+              value={inputRecordMode}
+              onChange={(e) => setInputRecordMode(e.target.value)}
+            >
+              <FormControlLabel value="api" control={<Radio />} label="API (Drone)" />
+              <FormControlLabel value="live_stream" control={<Radio />} label="Live Stream (Fallback)" />
+            </RadioGroup>
+          </FormControl>
+
 
           <Stack direction="row" spacing={2} justifyContent="flex-end">
             <Button onClick={onClose}>Cancelar</Button>

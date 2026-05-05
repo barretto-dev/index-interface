@@ -24,7 +24,8 @@ function App() {
   }
 
   const { showSnackbar } = useSnackbar();
-  const { droneApiUrl, droneApiPort} = useGlobal()
+  const { droneApiUrl, droneApiPort, recordMode } = useGlobal()
+
   
   const [folderModalOpen, setFolderModalOpen] = useState(false);
 
@@ -108,11 +109,16 @@ function App() {
   const handleRunFullProcess = async () => {
     try {
       setLoading(true)
+      let result;
 
-      setLoadingProgress(0)
-      setLoadingMessage("Recebendo frames...")
-      let result = await getFrames()
-      if (!result) return
+      if (recordMode !== "live_stream") {
+        setLoadingProgress(0)
+        setLoadingMessage("Recebendo frames...")
+        result = await getFrames()
+        if (!result) return
+      }
+
+
 
       
       setLoadingProgress(10)

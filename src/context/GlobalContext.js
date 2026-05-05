@@ -8,6 +8,8 @@ export function GlobalProvider({ children }) {
 
   const [droneApiUrl, setDroneApiUrl] = useState("192.168.0.20")
   const [droneApiPort, setDroneApiPort] = useState("8080");
+  const [recordMode, setRecordMode] = useState("api"); // 'api' ou 'live_stream'
+
 
   return (
     <GlobalContext.Provider value={{ 
@@ -15,7 +17,9 @@ export function GlobalProvider({ children }) {
         cameraPort, setCameraPort,
         droneApiUrl, setDroneApiUrl,
         droneApiPort, setDroneApiPort,
+        recordMode, setRecordMode,
     }}>
+
       {children}
     </GlobalContext.Provider>
   );

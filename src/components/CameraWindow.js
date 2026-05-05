@@ -12,7 +12,7 @@ import {
   IconButton,
 } from "@mui/material";
 
-import JSMpeg from "jsmpeg-player"; 
+import JSMpeg from '@cycjimmy/jsmpeg-player';
 import { startRecord, stopRecord } from "../apiRequests/cameraReq";
 import { useGlobal } from "../context/GlobalContext";
 import SettingsModal from "./SettingsModal"
@@ -21,7 +21,8 @@ import PointCloudWindow from "./PointCloudWindow";
 
 export default function CameraWindow() {
 
-  const {cameraUrl, cameraPort, droneApiUrl, droneApiPort} = useGlobal()
+  const { cameraUrl, cameraPort, droneApiUrl, droneApiPort, recordMode } = useGlobal()
+
 
   const [settingsOpen, setSettingsOpen] = React.useState(false);
 
@@ -42,7 +43,7 @@ export default function CameraWindow() {
 
   useEffect(() => {
     let interval = null;
-  
+
     if (isRecordOn) {
       interval = setInterval(() => {
         setRecordTime((prev) => prev + 1);
@@ -67,16 +68,16 @@ export default function CameraWindow() {
 
     if (loading) return;
 
-    if(isRecordOn){
+    if (isRecordOn) {
       showSnackbar("Por favor pare a gravação antes de desligar a camera", "warning")
       return
     }
 
     setIsCameraOn(checked);
 
-    if (checked) 
+    if (checked)
       await handleStartCamera();
-    else 
+    else
       await handleStopCamera();
 
   };
@@ -91,12 +92,13 @@ export default function CameraWindow() {
       if (playerRef.current) destroyPlayer()
 
       firstFrameRenderedRef.current = false;
-      const ws_url = "ws://"+cameraUrl+":"+cameraPort
+      const ws_url = "ws://" + cameraUrl + ":" + cameraPort
 
       playerRef.current = new JSMpeg.Player(ws_url, {
         canvas: canvasRef.current,
         autoplay: true,
         audio: false,
+        videoBufferSize: 1024 * 1024,
         disableGl: true,
 
         onVideoDecode: () => {
@@ -111,7 +113,7 @@ export default function CameraWindow() {
         if (!firstFrameRenderedRef.current) {
           setLoading(false)
           setIsCameraOn(false)
-          showSnackbar(`Tentativa de conexão ultrapassou o limite de ${TIMEOUT_CONNECTION/1000}s`, "error")
+          showSnackbar(`Tentativa de conexão ultrapassou o limite de ${TIMEOUT_CONNECTION / 1000}s`, "error")
         }
       }, TIMEOUT_CONNECTION)
 
@@ -150,7 +152,7 @@ export default function CameraWindow() {
     const canvas = canvasRef.current;
     if (canvas) {
       const ctx = canvas.getContext("2d");
-      if (ctx) 
+      if (ctx)
         ctx.clearRect(0, 0, canvas.width, canvas.height);
     }
 
@@ -166,7 +168,7 @@ export default function CameraWindow() {
 
     if (checked)
       await handleStartRecord();
-    else 
+    else
       await handleStopRecord();
 
   };
@@ -175,16 +177,24 @@ export default function CameraWindow() {
     try {
       setLoading(true);
       setLoadingMessage("Iniciando gravação...");
-      const {status, msg} = await startRecord();
+      
+      const fallbackConfig = {
+        wsUrl: "ws://" + cameraUrl + ":" + cameraPort,
+        recordMode: recordMode
+      };
 
-      if(status === "error") setIsRecordOn(false)
+
+      const { status, msg } = await startRecord(fallbackConfig);
+
+      if (status === "error") setIsRecordOn(false)
+
       showSnackbar(msg, status)
 
     } catch (err) {
       console.error(err);
       showSnackbar("Erro inesperado ocorreu", "error")
       setIsRecordOn(false)
-    }finally{
+    } finally {
       setLoading(false)
     }
   }
@@ -193,40 +203,46 @@ export default function CameraWindow() {
     try {
       setLoading(true);
       setLoadingMessage("Parando gravação...");
-      const {status, msg} = await stopRecord();
 
-      if(status === "error") setIsRecordOn(true)
+      const fallbackConfig = {
+        recordMode: recordMode
+      };
+
+      const { status, msg } = await stopRecord(fallbackConfig);
+
+
+      if (status === "error") setIsRecordOn(true)
       showSnackbar(msg, status)
 
     } catch (err) {
       console.error(err);
       showSnackbar("Erro inesperado ocorreu", "error")
       setIsRecordOn(true)
-    }finally{
+    } finally {
       setLoading(false)
     }
   };
 
   return (
-    <Box sx={{ width: "100%", height: "100%", display: "flex",}}>
+    <Box sx={{ width: "100%", height: "100%", display: "flex", }}>
       <Card sx={{ flex: 1, display: "flex", flexDirection: "column", backgroundColor: "#d9eaff", borderRadius: 0, minHeight: 0 }}>
         <CardContent sx={{ flex: 1, display: "flex", flexDirection: "column", p: 1, minHeight: 0 }}>
 
           <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 1 }}>
             <FormControlLabel
-              control={<Switch checked={isCameraOn} onChange={handleCameraToggle} disabled={loading}/>}
+              control={<Switch checked={isCameraOn} onChange={handleCameraToggle} disabled={loading} />}
               label={isCameraOn ? "Camera ON" : "Camera OFF"}
             />
             <FormControlLabel
-              control={<Switch checked={isRecordOn} onChange={handleRecordToggle}disabled={loading || !isCameraOn}/>}
+              control={<Switch checked={isRecordOn} onChange={handleRecordToggle} disabled={loading || !isCameraOn} />}
               label={isRecordOn ? "Record ON" : "Record OFF"}
             />
             {isRecordOn && (
-               <Typography variant="h5" sx={{paddingTop: "3px", color:"red"}}>
+              <Typography variant="h5" sx={{ paddingTop: "3px", color: "red" }}>
                 {formatTime(recordTime)}
               </Typography>
             )}
-           <IconButton onClick={() => setSettingsOpen(true)}>
+            <IconButton onClick={() => setSettingsOpen(true)}>
               <SettingsIcon />
             </IconButton>
           </Stack>
