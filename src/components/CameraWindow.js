@@ -38,6 +38,8 @@ export default function CameraWindow() {
 
   const [isCameraOn, setIsCameraOn] = useState(false);
   const [isRecordOn, setIsRecordOn] = useState(false);
+  const [isPointCloudOn, setIsPointCloudOn] = useState(false);
+
   const [recordTime, setRecordTime] = useState(0); //seconds
 
   useEffect(() => {
@@ -80,6 +82,11 @@ export default function CameraWindow() {
       await handleStopCamera();
 
   };
+
+  const handlePointCloudToggle = async (event) => {
+    const checked = event.target.checked;
+    setIsPointCloudOn(checked)
+  }
 
   const handleStartCamera = async () => {
     if (!canvasRef.current) return;
@@ -218,6 +225,10 @@ export default function CameraWindow() {
               label={isCameraOn ? "Camera ON" : "Camera OFF"}
             />
             <FormControlLabel
+              control={<Switch checked={isPointCloudOn} onChange={handlePointCloudToggle} disabled={loading}/>}
+              label={isPointCloudOn ? "PointCloud ON" : "PointCloud OFF"}
+            />
+            <FormControlLabel
               control={<Switch checked={isRecordOn} onChange={handleRecordToggle}disabled={loading || !isCameraOn}/>}
               label={isRecordOn ? "Record ON" : "Record OFF"}
             />
@@ -292,7 +303,7 @@ export default function CameraWindow() {
                 overflow: "hidden",
               }}
             >
-              <PointCloudWindow isCameraOn={isCameraOn} wsUrl="ws://127.0.0.1:8765" />
+              <PointCloudWindow isPointCloudOn={isPointCloudOn} wsUrl="ws://127.0.0.1:8765" />
             </Box>
           </Box>
         </CardContent>

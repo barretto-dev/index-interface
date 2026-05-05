@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 
-export default function PointCloudWindow({ wsUrl, isCameraOn  }) {
+export default function PointCloudWindow({ wsUrl, isPointCloudOn  }) {
   const mountRef = useRef(null);
 
   useEffect(() => {
@@ -47,7 +47,7 @@ export default function PointCloudWindow({ wsUrl, isCameraOn  }) {
 
     const setCloud = (buffer) => {
 
-      if (!isCameraOn) return;
+      if (!isPointCloudOn) return;
 
       const data = new Float32Array(buffer);
       const count = Math.floor(data.length / 6);
@@ -88,7 +88,7 @@ export default function PointCloudWindow({ wsUrl, isCameraOn  }) {
       }
     };
 
-    if (isCameraOn) {
+    if (isPointCloudOn) {
       socket = new WebSocket(wsUrl);
       socket.binaryType = "arraybuffer";
 
@@ -133,7 +133,7 @@ export default function PointCloudWindow({ wsUrl, isCameraOn  }) {
         container.removeChild(renderer.domElement);
       }
     };
-  }, [wsUrl, isCameraOn]);
+  }, [wsUrl, isPointCloudOn]);
 
   return (
     <div
