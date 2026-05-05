@@ -2,11 +2,12 @@ import React, { useEffect, useRef } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 
-export default function PointCloudWindow({ wsUrl, isCameraOn  }) {
+export default function PointCloudWindow({ wsUrl, isPointCloudOn }) {
   const mountRef = useRef(null);
 
   useEffect(() => {
     if (!mountRef.current) return;
+    if (!isPointCloudOn) return;
 
     const container = mountRef.current;
 
@@ -84,14 +85,17 @@ export default function PointCloudWindow({ wsUrl, isCameraOn  }) {
       }
     };
 
-    socket = new WebSocket(wsUrl);
-    socket.binaryType = "arraybuffer";
+    if (isPointCloudOn) {
+      socket = new WebSocket(wsUrl);
+      socket.binaryType = "arraybuffer";
 
-    socket.onmessage = (event) => {
-      if (event.data instanceof ArrayBuffer) {
-        setCloud(event.data);
-      }
-    };
+      socket.onmessage = (event) => {
+        if (event.data instanceof ArrayBuffer) {
+          setCloud(event.data);
+        }
+      };
+    }
+
 
     const handleResize = () => {
       camera.aspect = container.clientWidth / container.clientHeight;
@@ -127,7 +131,7 @@ export default function PointCloudWindow({ wsUrl, isCameraOn  }) {
         container.removeChild(renderer.domElement);
       }
     };
-  }, [wsUrl, isCameraOn]);
+  }, [wsUrl, isPointCloudOn]);
 
   return (
     <div

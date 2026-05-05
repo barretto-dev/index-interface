@@ -39,6 +39,7 @@ export default function CameraWindow() {
 
   const [isCameraOn, setIsCameraOn] = useState(false);
   const [isRecordOn, setIsRecordOn] = useState(false);
+  const [isPointCloudOn, setIsPointCloudOn] = useState(false);
   const [recordTime, setRecordTime] = useState(0); //seconds
 
   useEffect(() => {
@@ -161,6 +162,14 @@ export default function CameraWindow() {
     firstFrameRenderedRef.current = false;
   };
 
+  const handlePointCloudToggle = async (event) => {
+    const checked = event.target.checked;
+
+    if (loading) return;
+
+    setIsPointCloudOn(checked);
+  };
+
   const handleRecordToggle = async (event) => {
     const checked = event.target.checked;
 
@@ -179,7 +188,7 @@ export default function CameraWindow() {
     try {
       setLoading(true);
       setLoadingMessage("Iniciando gravação...");
-      
+
       const fallbackConfig = {
         wsUrl: "ws://" + cameraUrl + ":" + cameraPort,
         recordMode: recordMode,
@@ -237,9 +246,14 @@ export default function CameraWindow() {
               label={isCameraOn ? "Camera ON" : "Camera OFF"}
             />
             <FormControlLabel
+              control={<Switch checked={isPointCloudOn} onChange={handlePointCloudToggle} disabled={loading} />}
+              label={isPointCloudOn ? "PointCloud ON" : "PointCloud OFF"}
+            />
+            <FormControlLabel
               control={<Switch checked={isRecordOn} onChange={handleRecordToggle} disabled={loading || !isCameraOn} />}
               label={isRecordOn ? "Record ON" : "Record OFF"}
             />
+
             {isRecordOn && (
               <Typography variant="h5" sx={{ paddingTop: "3px", color: "red" }}>
                 {formatTime(recordTime)}
@@ -311,7 +325,7 @@ export default function CameraWindow() {
                 overflow: "hidden",
               }}
             >
-              <PointCloudWindow isCameraOn={isCameraOn} wsUrl="ws://127.0.0.1:8765" />
+              <PointCloudWindow isPointCloudOn={isPointCloudOn} wsUrl="ws://127.0.0.1:8764" />
             </Box>
           </Box>
         </CardContent>
