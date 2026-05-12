@@ -31,11 +31,12 @@ export default function CameraWindow() {
 
   const [settingsOpen, setSettingsOpen] = React.useState(false);
 
-  const TIMEOUT_CONNECTION = 15000
+  const TIMEOUT_CONNECTION = 10000
 
   const canvasRef = useRef(null);
   const playerRef = useRef(null);
   const firstFrameRenderedRef = useRef(false);
+  const connectionTimeoutRef = useRef(null);
 
   const { showSnackbar } = useSnackbar();
 
@@ -88,11 +89,6 @@ export default function CameraWindow() {
 
   };
 
-  const handlePointCloudToggle = async (event) => {
-    const checked = event.target.checked;
-    setIsPointCloudOn(checked)
-  }
-
   const handleStartCamera = async () => {
     if (!canvasRef.current) return;
 
@@ -122,8 +118,9 @@ export default function CameraWindow() {
         },
       })
 
-      setTimeout(() => {
+      connectionTimeoutRef.current = setTimeout(() => {
         if (!firstFrameRenderedRef.current) {
+          destroyPlayer();
           setLoading(false)
           setIsCameraOn(false)
           showSnackbar(`Tentativa de conexão ultrapassou o limite de ${TIMEOUT_CONNECTION / 1000}s`, "error")
@@ -152,6 +149,12 @@ export default function CameraWindow() {
   };
 
   const destroyPlayer = () => {
+
+    if (connectionTimeoutRef.current) {
+      clearTimeout(connectionTimeoutRef.current);
+      connectionTimeoutRef.current = null;
+    }
+
     if (playerRef.current) {
       try {
         playerRef.current.destroy();
