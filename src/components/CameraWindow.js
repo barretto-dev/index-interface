@@ -88,6 +88,11 @@ export default function CameraWindow() {
 
   };
 
+  const handlePointCloudToggle = async (event) => {
+    const checked = event.target.checked;
+    setIsPointCloudOn(checked)
+  }
+
   const handleStartCamera = async () => {
     if (!canvasRef.current) return;
 

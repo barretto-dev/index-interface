@@ -26,10 +26,10 @@ export default function PointCloudWindow({ wsUrl, isPointCloudOn }) {
       200
     );
 
-    camera.position.set(0, -2.2, 1.4);
+    camera.position.set(0.026, 0.023, 0.927)
 
     const controls = new OrbitControls(camera, renderer.domElement);
-    controls.target.set(0, 0, 1.2);
+
     controls.enableDamping = true;
 
     const grid = new THREE.GridHelper(10, 20, 0x3a4248, 0x252b30);
@@ -47,6 +47,9 @@ export default function PointCloudWindow({ wsUrl, isPointCloudOn }) {
     let animationId = null;
 
     const setCloud = (buffer) => {
+
+      if (!isPointCloudOn) return;
+
       const data = new Float32Array(buffer);
       const count = Math.floor(data.length / 6);
 
@@ -75,6 +78,7 @@ export default function PointCloudWindow({ wsUrl, isPointCloudOn }) {
       }
 
       const geometry = new THREE.BufferGeometry();
+
       geometry.setAttribute(
         "position",
         new THREE.BufferAttribute(new Float32Array(positions), 3)
@@ -86,7 +90,7 @@ export default function PointCloudWindow({ wsUrl, isPointCloudOn }) {
       geometry.computeBoundingSphere();
 
       if (cloud) {
-        cloud.geometry.dispose();
+        cloud.geometry.dispose()
         cloud.geometry = geometry;
       } else {
         cloud = new THREE.Points(geometry, material);
