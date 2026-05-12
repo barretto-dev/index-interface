@@ -4,6 +4,7 @@
   "private": true,
   "proxy": "http://192.168.0.20:8080",
   "dependencies": {
+    "@cycjimmy/jsmpeg-player": "^6.1.2",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
     "@mui/icons-material": "^9.0.0",
@@ -14,7 +15,6 @@
     "@testing-library/user-event": "^13.5.0",
     "@xterm/addon-fit": "^0.11.0",
     "@xterm/xterm": "^6.0.0",
-    "jsmpeg-player": "^3.0.3",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
     "react-scripts": "5.0.1",
