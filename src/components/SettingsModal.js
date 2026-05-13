@@ -8,7 +8,7 @@ export default function SettingsModal({ open, onClose }) {
   const [inputCameraPort, setInputCameraPort] = useState("");
   const [inputDroneApiUrl, setInputDroneApiUrl] = useState("");
   const [inputDroneApiPort, setInputDroneApiPort] = useState("");
-  const [inputRecordMode, setInputRecordMode] = useState("api");
+  const [inputRecordMode, setInputRecordMode] = useState("live_stream");
   const [inputRtmpUrl, setInputRtmpUrl] = useState("");
   const [inputRtmpPreviewFps, setInputRtmpPreviewFps] = useState("60");
 

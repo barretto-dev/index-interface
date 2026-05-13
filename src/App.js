@@ -97,7 +97,7 @@ function App() {
     addProcessEvent(
       "executando",
       "Preparando frames com COLMAP",
-      "POST /images/prepare/start -> python3 convert.py -s /development/frames"
+      "POST /images/prepare/start -> python3 convert.py -s /development/frames --no_gpu"
     );
     setResetTerminal((prev) => prev + 1);
     setTerminalType(ENUM_TERMINAL_TYPES["prepare-frames"]);
