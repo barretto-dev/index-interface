@@ -14,12 +14,36 @@ import {
 
 import JSMpeg from '@cycjimmy/jsmpeg-player';
 import { startRecord, stopRecord } from "../apiRequests/cameraReq";
+import { startGeneration, stopGeneration } from "../apiRequests/pointCloudReq";
 import { useGlobal } from "../context/GlobalContext";
 import SettingsModal from "./SettingsModal"
 import SettingsIcon from '@mui/icons-material/Settings';
 import PointCloudWindow from "./PointCloudWindow";
 
 export default function CameraWindow() {
+
+  const CAMERA_WINDOW_BOX_STYLE = { 
+    flex: 1,
+    backgroundColor: "#000",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    overflow: "hidden",
+    minHeight: 0,
+    position: "relative",
+  }
+
+  const LOADING_BOX_STYLE = {
+    position: "absolute",
+    inset: 0,
+    backgroundColor: "rgba(0, 0, 0, 0.65)",
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 2,
+    zIndex: 2,
+  }
 
   const { cameraUrl, cameraPort, recordMode, rtmpUrl, rtmpPreviewFps } = useGlobal()
   const pointCloudWsUrl = process.env.REACT_APP_POINTCLOUD_WS_URL || `ws://${window.location.hostname}:8764`;
@@ -40,8 +64,11 @@ export default function CameraWindow() {
 
   const { showSnackbar } = useSnackbar();
 
-  const [loading, setLoading] = useState(false);
-  const [loadingMessage, setLoadingMessage] = useState("");
+  const [loadingCamera, setLoadingCamera] = useState(false);
+  const [loadingCameraMessage, setLoadingCameraMessage] = useState("");
+
+  const [loadingPointcloud, setLoadingPointcloud] = useState(false);
+  const [loadingPointcloudMessage, setLoadingPointcloudMessage] = useState("");
 
   const [isCameraOn, setIsCameraOn] = useState(false);
   const [isRecordOn, setIsRecordOn] = useState(false);
@@ -73,7 +100,7 @@ export default function CameraWindow() {
   const handleCameraToggle = async (event) => {
     const checked = event.target.checked;
 
-    if (loading) return;
+    if (loadingCamera) return;
 
     if (isRecordOn) {
       showSnackbar("Por favor pare a gravação antes de desligar a camera", "warning")
@@ -92,8 +119,8 @@ export default function CameraWindow() {
   const handleStartCamera = async () => {
     if (!canvasRef.current) return;
 
-    setLoading(true);
-    setLoadingMessage("Iniciando vídeo...");
+    setLoadingCamera(true);
+    setLoadingCameraMessage("Iniciando vídeo...");
 
     try {
       if (playerRef.current) destroyPlayer()
@@ -113,7 +140,7 @@ export default function CameraWindow() {
         onVideoDecode: () => {
           if (!firstFrameRenderedRef.current) {
             firstFrameRenderedRef.current = true
-            setLoading(false)
+            setLoadingCamera(false)
           }
         },
       })
@@ -121,30 +148,30 @@ export default function CameraWindow() {
       connectionTimeoutRef.current = setTimeout(() => {
         if (!firstFrameRenderedRef.current) {
           destroyPlayer();
-          setLoading(false)
+          setLoadingCamera(false)
           setIsCameraOn(false)
           showSnackbar(`Tentativa de conexão ultrapassou o limite de ${TIMEOUT_CONNECTION / 1000}s`, "error")
         }
       }, TIMEOUT_CONNECTION)
 
     } catch (err) {
-      setLoading(false);
+      setLoadingCamera(false);
       setIsCameraOn(false);
       showSnackbar("Erro inesperado ocorreu", "error", 6000);
     }
   };
 
   const handleStopCamera = async () => {
-    if (loading) return;
+    if (loadingCamera) return;
 
-    setLoading(true);
-    setLoadingMessage("Parando vídeo...");
+    setLoadingCamera(true);
+    setLoadingCameraMessage("Parando vídeo...");
 
     try {
       destroyPlayer();
     } finally {
-      setLoading(false);
-      setLoadingMessage("");
+      setLoadingCamera(false);
+      setLoadingCameraMessage("");
     }
   };
 
@@ -178,15 +205,72 @@ export default function CameraWindow() {
   const handlePointCloudToggle = async (event) => {
     const checked = event.target.checked;
 
-    if (loading) return;
+    if (loadingCamera) return;
 
-    setIsPointCloudOn(checked);
+    if (!isCameraOn) {
+      showSnackbar("Por favor inicie camera para exibir a pointcloud", "warning")
+      return
+    }
+
+    if(isRecordOn){
+      showSnackbar("Por favor encerrer a gravação antes de exibir a pointcloud", "warning")
+      return
+    }
+
+    //setIsPointCloudOn(checked);
+
+    if (checked)
+      await startPointCloud();
+    else
+      await stopPointCloud();
   };
+
+  const startPointCloud = async() => {
+    try {
+      setLoadingPointcloud(true)
+      setLoadingPointcloudMessage("Iniciando pointcloud...")
+
+      const { status, msg } = await startGeneration(cameraUrl, cameraPort);
+
+      //Give time to 3d recon deep start completely
+      await new Promise(resolve => setTimeout(resolve, 5000));
+
+      if (status === "error") setIsPointCloudOn(false)
+      showSnackbar(msg, status)
+
+    } catch (err) {
+      console.error(err);
+      showSnackbar("Erro inesperado ocorreu", "error")
+      setIsPointCloudOn(false)
+    } finally {
+      setLoadingPointcloud(false)
+      setIsPointCloudOn(true);
+    }
+  }
+
+  const stopPointCloud = async() => {
+    try {
+      setLoadingPointcloud(true)
+      setLoadingPointcloudMessage("Encerrando pointcloud...")
+
+      const { status, msg } = await stopGeneration();
+      if (status === "error") setIsPointCloudOn(true)
+      showSnackbar(msg, status)
+
+    } catch (err) {
+      console.error(err);
+      showSnackbar("Erro inesperado ocorreu", "error")
+      setIsPointCloudOn(true)
+    } finally {
+      setLoadingPointcloud(false)
+      setIsPointCloudOn(false);
+    }
+  }
 
   const handleRecordToggle = async (event) => {
     const checked = event.target.checked;
 
-    if (loading) return;
+    if (loadingCamera) return;
 
     setIsRecordOn(checked);
 
@@ -199,8 +283,8 @@ export default function CameraWindow() {
 
   const handleStartRecord = async () => {
     try {
-      setLoading(true);
-      setLoadingMessage("Iniciando gravação...");
+      setLoadingCamera(true);
+      setLoadingCameraMessage("Iniciando gravação...");
 
       const fallbackConfig = {
         wsUrl: cameraWsUrl,
@@ -220,14 +304,14 @@ export default function CameraWindow() {
       showSnackbar("Erro inesperado ocorreu", "error")
       setIsRecordOn(false)
     } finally {
-      setLoading(false)
+      setLoadingCamera(false)
     }
   }
 
   const handleStopRecord = async () => {
     try {
-      setLoading(true);
-      setLoadingMessage("Parando gravação...");
+      setLoadingCamera(true);
+      setLoadingCameraMessage("Parando gravação...");
 
       const fallbackConfig = {
         recordMode: recordMode
@@ -244,7 +328,7 @@ export default function CameraWindow() {
       showSnackbar("Erro inesperado ocorreu", "error")
       setIsRecordOn(true)
     } finally {
-      setLoading(false)
+      setLoadingCamera(false)
     }
   };
 
@@ -255,15 +339,15 @@ export default function CameraWindow() {
 
           <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 1 }}>
             <FormControlLabel
-              control={<Switch checked={isCameraOn} onChange={handleCameraToggle} disabled={loading} />}
+              control={<Switch checked={isCameraOn} onChange={handleCameraToggle} disabled={loadingCamera || loadingPointcloud} />}
               label={isCameraOn ? "Camera ON" : "Camera OFF"}
             />
             <FormControlLabel
-              control={<Switch checked={isPointCloudOn} onChange={handlePointCloudToggle} disabled={loading} />}
+              control={<Switch checked={isPointCloudOn} onChange={handlePointCloudToggle} disabled={loadingCamera || loadingPointcloud} />}
               label={isPointCloudOn ? "PointCloud ON" : "PointCloud OFF"}
             />
             <FormControlLabel
-              control={<Switch checked={isRecordOn} onChange={handleRecordToggle} disabled={loading || !isCameraOn} />}
+              control={<Switch checked={isRecordOn} onChange={handleRecordToggle} disabled={loadingCamera || !isCameraOn} />}
               label={isRecordOn ? "Record ON" : "Record OFF"}
             />
 
@@ -277,26 +361,8 @@ export default function CameraWindow() {
             </IconButton>
           </Stack>
 
-          <Box
-            sx={{
-              flex: 1,
-              display: "flex",
-              gap: 1,
-              minHeight: 0,
-            }}
-          >
-            <Box
-              sx={{
-                flex: 1,
-                backgroundColor: "#000",
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                overflow: "hidden",
-                minHeight: 0,
-                position: "relative",
-              }}
-            >
+          <Box sx={{flex: 1, display: "flex",gap: 1, minHeight: 0,}}>
+            <Box sx={CAMERA_WINDOW_BOX_STYLE}>
               <canvas
                 ref={canvasRef}
                 width={1280}
@@ -311,37 +377,32 @@ export default function CameraWindow() {
                 }}
               />
 
-              {loading && (
-                <Box
-                  sx={{
-                    position: "absolute",
-                    inset: 0,
-                    backgroundColor: "rgba(0, 0, 0, 0.65)",
-                    display: "flex",
-                    flexDirection: "column",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    gap: 2,
-                    zIndex: 2,
-                  }}
-                >
+              {loadingCamera && (
+                 <Box sx={LOADING_BOX_STYLE}>
                   <CircularProgress sx={{ color: "#fff" }} />
                   <Typography sx={{ color: "#fff" }}>
-                    {loadingMessage || "Carregando..."}
+                    {loadingCameraMessage || "Carregando..."}
                   </Typography>
                 </Box>
               )}
             </Box>
 
-            <Box
-              sx={{
-                flex: 1,
-                backgroundColor: "#101214",
-                minHeight: 0,
-                overflow: "hidden",
-              }}
-            >
-              <PointCloudWindow isPointCloudOn={isPointCloudOn} wsUrl={pointCloudWsUrl} />
+            <Box sx={CAMERA_WINDOW_BOX_STYLE}>
+              <PointCloudWindow 
+                isPointCloudOn={isPointCloudOn} 
+                wsUrl={pointCloudWsUrl} 
+                loading={loadingPointcloud}
+                loadingMessage={loadingPointcloudMessage}
+              />
+
+              {loadingPointcloud && (
+                <Box sx={LOADING_BOX_STYLE}>
+                  <CircularProgress sx={{ color: "#fff" }} />
+                  <Typography sx={{ color: "#fff" }}>
+                    {loadingPointcloudMessage || "Carregando..."}
+                  </Typography>
+                </Box>
+              )}
             </Box>
           </Box>
         </CardContent>

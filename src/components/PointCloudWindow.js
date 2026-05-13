@@ -2,12 +2,12 @@ import React, { useEffect, useRef } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 
-export default function PointCloudWindow({ wsUrl, isPointCloudOn }) {
+export default function PointCloudWindow({ wsUrl, isPointCloudOn, loading, loadingMessage }) {
   const mountRef = useRef(null);
 
   useEffect(() => {
     if (!mountRef.current) return;
-    if (!isPointCloudOn) return;
+    if(!isPointCloudOn) return;
 
     const container = mountRef.current;
 
@@ -147,13 +147,13 @@ export default function PointCloudWindow({ wsUrl, isPointCloudOn }) {
   }, [wsUrl, isPointCloudOn]);
 
   return (
-    <div
-      ref={mountRef}
-      style={{
-        width: "100%",
-        height: "100%",
-        backgroundColor: "#101214",
-      }}
-    />
-  );
+      <div
+        ref={mountRef}
+        style={{
+          width: "100%",
+          height: "100%",
+          backgroundColor: "#101214",
+        }}
+      />
+  )
 }
