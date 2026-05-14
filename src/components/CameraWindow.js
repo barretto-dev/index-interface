@@ -19,6 +19,7 @@ import { useGlobal } from "../context/GlobalContext";
 import SettingsModal from "./SettingsModal"
 import SettingsIcon from '@mui/icons-material/Settings';
 import PointCloudWindow from "./PointCloudWindow";
+import SplitButton from "./SplitButton";
 
 export default function CameraWindow() {
 
@@ -74,6 +75,32 @@ export default function CameraWindow() {
   const [isRecordOn, setIsRecordOn] = useState(false);
   const [isPointCloudOn, setIsPointCloudOn] = useState(false);
   const [recordTime, setRecordTime] = useState(0); //seconds
+
+  const pointCloudButtonOptions = [
+    {
+      label: "Start PointCloud",
+      onClick: () => startPointCloud(),
+      color: "primary"
+    },
+    {
+      label: "Stop PointCloud",
+      onClick: () => stopPointCloud(),
+      color: "error"
+    }
+  ]
+
+  const recordButtonOptions = [
+    {
+      label: "Start Record",
+      onClick: () => inicializeRecord(),
+      color: "primary",
+    },
+    {
+      label: "Stop Record",
+      onClick: () => endRecord(),
+      color: "error"
+    }
+  ]
 
   useEffect(() => {
     let interval = null;
@@ -202,49 +229,44 @@ export default function CameraWindow() {
     firstFrameRenderedRef.current = false;
   };
 
-  const handlePointCloudToggle = async (event) => {
-    const checked = event.target.checked;
-
-    if (loadingCamera) return;
-
-    if (!isCameraOn) {
-      showSnackbar("Por favor inicie camera para exibir a pointcloud", "warning")
-      return
-    }
-
-    if(isRecordOn){
-      showSnackbar("Por favor encerrer a gravação antes de exibir a pointcloud", "warning")
-      return
-    }
-
-    //setIsPointCloudOn(checked);
-
-    if (checked)
-      await startPointCloud();
-    else
-      await stopPointCloud();
-  };
-
   const startPointCloud = async() => {
     try {
+
+      if (loadingCamera) return;
+
+      if (!isCameraOn) {
+        showSnackbar("Por favor inicie camera para exibir a pointcloud", "warning")
+        return
+      }
+
+      if(isRecordOn){
+        showSnackbar("Por favor encerrer a gravação antes de iniciar pointcloud", "warning")
+        return
+      }
+
       setLoadingPointcloud(true)
       setLoadingPointcloudMessage("Iniciando pointcloud...")
 
+      let result = false
       const { status, msg } = await startGeneration(cameraUrl, cameraPort);
 
-      //Give time to 3d recon deep start completely
-      await new Promise(resolve => setTimeout(resolve, 5000));
-
       if (status === "error") setIsPointCloudOn(false)
+      else{
+        //Give time to 3d recon deep start completely
+        await new Promise(resolve => setTimeout(resolve, 5000));
+        setIsPointCloudOn(true);
+        result = true
+      }
+      
       showSnackbar(msg, status)
-
+      return result
     } catch (err) {
       console.error(err);
       showSnackbar("Erro inesperado ocorreu", "error")
       setIsPointCloudOn(false)
+      return false
     } finally {
       setLoadingPointcloud(false)
-      setIsPointCloudOn(true);
     }
   }
 
@@ -253,36 +275,42 @@ export default function CameraWindow() {
       setLoadingPointcloud(true)
       setLoadingPointcloudMessage("Encerrando pointcloud...")
 
+      let result = true
       const { status, msg } = await stopGeneration();
-      if (status === "error") setIsPointCloudOn(true)
+      if (status === "error"){
+        setIsPointCloudOn(true)
+        result = false
+      } 
+
       showSnackbar(msg, status)
+      return result
 
     } catch (err) {
       console.error(err);
       showSnackbar("Erro inesperado ocorreu", "error")
       setIsPointCloudOn(true)
+      return false
     } finally {
       setLoadingPointcloud(false)
       setIsPointCloudOn(false);
     }
   }
 
-  const handleRecordToggle = async (event) => {
-    const checked = event.target.checked;
-
-    if (loadingCamera) return;
-
-    setIsRecordOn(checked);
-
-    if (checked)
-      await handleStartRecord();
-    else
-      await handleStopRecord();
-
-  };
-
-  const handleStartRecord = async () => {
+  const inicializeRecord = async () => {
     try {
+
+      if (loadingCamera) return;
+
+      if (!isCameraOn) {
+        showSnackbar("Por favor inicie camera para iniciar gravação", "warning")
+        return
+      }
+
+      if(isPointCloudOn){
+        showSnackbar("Por favor encerrer a pointcloud antes de iniciar gravação", "warning")
+        return
+      }
+
       setLoadingCamera(true);
       setLoadingCameraMessage("Iniciando gravação...");
 
@@ -292,23 +320,29 @@ export default function CameraWindow() {
         rtmpUrl: rtmpUrl
       };
 
-
+      let result = true
       const { status, msg } = await startRecord(fallbackConfig);
 
-      if (status === "error") setIsRecordOn(false)
+      if (status === "error") {
+        result = false
+        setIsRecordOn(false)
+      }
+      else setIsRecordOn(true)
 
       showSnackbar(msg, status)
-
+      return result
+      
     } catch (err) {
       console.error(err);
       showSnackbar("Erro inesperado ocorreu", "error")
       setIsRecordOn(false)
+      return false
     } finally {
       setLoadingCamera(false)
     }
   }
 
-  const handleStopRecord = async () => {
+  const endRecord = async () => {
     try {
       setLoadingCamera(true);
       setLoadingCameraMessage("Parando gravação...");
@@ -317,16 +351,23 @@ export default function CameraWindow() {
         recordMode: recordMode
       };
 
+      let result = true
       const { status, msg } = await stopRecord(fallbackConfig);
 
+      if (status === "error"){
+        result = false 
+        setIsRecordOn(true)
+      }
+      else setIsRecordOn(false)
 
-      if (status === "error") setIsRecordOn(true)
       showSnackbar(msg, status)
+      return result
 
     } catch (err) {
       console.error(err);
       showSnackbar("Erro inesperado ocorreu", "error")
       setIsRecordOn(true)
+      return false
     } finally {
       setLoadingCamera(false)
     }
@@ -342,14 +383,17 @@ export default function CameraWindow() {
               control={<Switch checked={isCameraOn} onChange={handleCameraToggle} disabled={loadingCamera || loadingPointcloud} />}
               label={isCameraOn ? "Camera ON" : "Camera OFF"}
             />
-            <FormControlLabel
+           <SplitButton options={pointCloudButtonOptions} loading={loadingCamera || loadingPointcloud}/>
+           <SplitButton options={recordButtonOptions} loading={loadingCamera || loadingPointcloud}/>
+           
+            {/* <FormControlLabel
               control={<Switch checked={isPointCloudOn} onChange={handlePointCloudToggle} disabled={loadingCamera || loadingPointcloud} />}
               label={isPointCloudOn ? "PointCloud ON" : "PointCloud OFF"}
             />
             <FormControlLabel
               control={<Switch checked={isRecordOn} onChange={handleRecordToggle} disabled={loadingCamera || !isCameraOn} />}
               label={isRecordOn ? "Record ON" : "Record OFF"}
-            />
+            /> */}
 
             {isRecordOn && (
               <Typography variant="h5" sx={{ paddingTop: "3px", color: "red" }}>
