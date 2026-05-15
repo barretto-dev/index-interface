@@ -43,7 +43,6 @@ export default function SettingsModal({ open, onClose }) {
     setRtmpUrl(inputRtmpUrl)
     setRtmpPreviewFps(inputRtmpPreviewFps)
     onClose();
-
   };
 
   return (
@@ -68,21 +67,21 @@ export default function SettingsModal({ open, onClose }) {
         <Stack spacing={2}>
           <Stack direction="row" spacing={2}>
             <TextField
-              label="CameraUrl"
+              label="CameraWSUrl"
               value={inputCameraUrl}
               onChange={(e) => setInputCameraUrl(e.target.value)}
               fullWidth
             />
 
             <TextField
-              label="CameraPort"
+              label="CameraWSPort"
               value={inputCameraPort}
               onChange={(e) => setInputCameraPort(e.target.value)}
               fullWidth
             />
           </Stack>
 
-          <Stack direction="row" spacing={2}>
+          {/* <Stack direction="row" spacing={2}>
             <TextField
               label="droneApiUrl"
               value={inputDroneApiUrl}
@@ -96,7 +95,7 @@ export default function SettingsModal({ open, onClose }) {
               onChange={(e) => setInputDroneApiPort(e.target.value)}
               fullWidth
             />
-          </Stack>
+          </Stack> */}
 
           <FormControl>
             <FormLabel>Modo de Gravação</FormLabel>
@@ -105,7 +104,7 @@ export default function SettingsModal({ open, onClose }) {
               value={inputRecordMode}
               onChange={(e) => setInputRecordMode(e.target.value)}
             >
-              <FormControlLabel value="api" control={<Radio />} label="API (Drone)" />
+              {/* <FormControlLabel value="api" control={<Radio />} label="API (Drone)" /> */}
               <FormControlLabel value="live_stream" control={<Radio />} label="Live Stream (Fallback)" />
               <FormControlLabel value="rtmp" control={<Radio />} label="RTMP" />
             </RadioGroup>
@@ -132,7 +131,7 @@ export default function SettingsModal({ open, onClose }) {
 
 
           <Stack direction="row" spacing={2} justifyContent="flex-end">
-            <Button onClick={onClose}>Cancelar</Button>
+            <Button variant="contained" color="error" onClick={onClose}>Cancelar</Button>
 
             <Button variant="contained" onClick={handleSave}>
               Salvar

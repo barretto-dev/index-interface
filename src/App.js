@@ -157,9 +157,6 @@ function App() {
         if (!result) return
       }
 
-
-
-
       setLoadingProgress(10)
       setLoadingMessage("Preparando frames...")
       result = await startFramePreparation()
@@ -228,7 +225,7 @@ function App() {
                 </Box>
               ) :
                 (
-                  <Stack direction="column" spacing={3} sx={{ mb: 1, width: "100%", p: 2, boxSizing: "border-box" }}>
+                  <Stack direction="column" spacing={3} sx={{ mb: 1, width: "80%", p: 2, boxSizing: "border-box" }}>
                     <Button variant="contained" onClick={handleRunFullProcess}>
                       Iniciar nova reconstrução
                     </Button>
